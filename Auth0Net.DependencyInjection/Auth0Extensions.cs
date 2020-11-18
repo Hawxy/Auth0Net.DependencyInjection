@@ -25,7 +25,7 @@ namespace Microsoft.Extensions.DependencyInjection
         }
         public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection collection, string domain)
         {
-            collection.AddScoped(x => new ManagementApiClient(null, new Uri($"{domain}api/v2"), x.GetRequiredService<IManagementConnection>()));
+            collection.AddScoped(x => new ManagementApiClient(null, Auth0Util.GetAuth0ApiUrl(domain), x.GetRequiredService<IManagementConnection>()));
             return collection.AddHttpClient<IManagementConnection, HttpClientManagementConnection>();
         }
 

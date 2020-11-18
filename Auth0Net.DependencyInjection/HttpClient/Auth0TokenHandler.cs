@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,20 +20,10 @@ namespace Auth0NET.DependencyInjection.HttpClient
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            request.Headers.Authorization = new AuthenticationHeaderValue(Scheme, await _cache.GetTokenAsync(_config.Audience));
+            var audience = _config.Audience ?? request.RequestUri?.AbsoluteUri ?? throw new ArgumentException("Audience cannot be computed");
+
+            request.Headers.Authorization = new AuthenticationHeaderValue(Scheme, await _cache.GetTokenAsync(audience));
             return await base.SendAsync(request, cancellationToken);
-        }
-    }
-
-    public class Auth0TokenConfig
-    {
-        public string Audience { get; set; } = null!;
-
-        public Auth0TokenConfig() { }
-
-        public Auth0TokenConfig(string audience)
-        {
-            Audience = audience;
         }
     }
 }
