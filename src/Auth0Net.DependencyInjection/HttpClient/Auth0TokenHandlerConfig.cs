@@ -1,4 +1,4 @@
-﻿namespace Auth0NET.DependencyInjection.HttpClient
+﻿namespace Auth0Net.DependencyInjection.HttpClient
 {
     public class Auth0TokenConfig
     {
