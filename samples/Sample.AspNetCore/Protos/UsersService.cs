@@ -1,5 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using Auth0.ManagementApi;
+using Auth0.ManagementApi.Models;
+using Auth0.ManagementApi.Paging;
 using Grpc.Core;
 using User;
 
@@ -15,15 +18,13 @@ namespace Sample.AspNetCore.Protos
 
         public override async Task<UserResponse> GetUser(UserRequest request, ServerCallContext context)
         {
-            var user = await _client.Users.GetAsync(request.UserId);
+            var users = await _client.Users.GetAllAsync(new GetUsersRequest(), new PaginationInfo());
 
             return new UserResponse
             {
-                User = new UserDto
+                Users =
                 {
-                    UserId = user.UserId,
-                    FullName = user.FullName,
-                    Email = user.Email
+                    users.Select(x=> new UserDto {UserId = x.UserId, Email = x.Email, FullName = x.FullName})
                 }
             };
         }

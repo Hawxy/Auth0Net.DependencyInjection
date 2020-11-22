@@ -90,9 +90,8 @@ namespace Microsoft.Extensions.DependencyInjection
             config?.Invoke(c);
 
             builder.Services.TryAddScoped<IAuth0TokenCache, Auth0TokenCache>();
-            builder.Services.TryAddTransient<Auth0TokenHandler>();
-            builder.AddHttpMessageHandler(provider => new Auth0TokenHandler(provider.GetRequiredService<IAuth0TokenCache>(), c));
-            return builder.AddHttpMessageHandler<Auth0TokenHandler>();
+            return builder.AddHttpMessageHandler(provider => 
+                new Auth0TokenHandler(provider.GetRequiredService<IAuth0TokenCache>(), c));
         }
 
         /// <summary>
@@ -106,9 +105,8 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IHttpClientBuilder AddManagementTokenInjection(this IHttpClientBuilder builder)
         {
             builder.Services.TryAddScoped<IAuth0TokenCache, Auth0TokenCache>();
-            builder.Services.TryAddTransient<Auth0TokenHandler>();
-            builder.AddHttpMessageHandler(provider => new Auth0TokenHandler(provider.GetRequiredService<IAuth0TokenCache>(), new Auth0TokenConfig(UriHelpers.GetValidManagementUri(provider.GetRequiredService<IOptionsSnapshot<Auth0Configuration>>().Value.Domain).ToString())));
-            return builder.AddHttpMessageHandler<Auth0TokenHandler>();
+            return builder.AddHttpMessageHandler(provider => 
+                new Auth0TokenHandler(provider.GetRequiredService<IAuth0TokenCache>(), new Auth0TokenConfig(UriHelpers.GetValidManagementUri(provider.GetRequiredService<IOptionsSnapshot<Auth0Configuration>>().Value.Domain).ToString())));
         }
     }
 

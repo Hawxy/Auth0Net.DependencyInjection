@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Auth0.ManagementApi;
+using Auth0.ManagementApi.Models;
+using Auth0.ManagementApi.Paging;
 
 namespace Sample.AspNetCore.Controllers
 {
@@ -15,12 +18,12 @@ namespace Sample.AspNetCore.Controllers
             _managementApiClient = managementApiClient;
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<User>> Get(string id)
+        [HttpGet]
+        public async Task<ActionResult<User[]>> Get()
         {
-            var user = await _managementApiClient.Users.GetAsync(id);
+            var user = await _managementApiClient.Users.GetAllAsync(new GetUsersRequest(), new PaginationInfo());
 
-            return new User(user.UserId, user.FullName, user.Email);
+            return user.Select(x => new User(x.UserId, x.FullName, x.Email)).ToArray();
         }
     }
 

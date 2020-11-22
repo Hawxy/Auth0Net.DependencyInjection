@@ -1,5 +1,6 @@
 using Auth0Net.DependencyInjection.HttpClient;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -37,19 +38,27 @@ namespace Sample.AspNetCore
                     options.Audience = Configuration["Auth0:Audience"];
                 });
 
-            // If you're just using the authentication client and nothing else, you can use this lightweight version instead.
-            // services.AddAuth0AuthenticationClientCore(domain);
+            // We'll require all endpoints to be authorized by default
+            services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
 
-            // Adds the authentication client and provides configuration to be consumed by the management client, token cache, and IHttpClientBuilder integrations
-            services.AddAuth0AuthenticationClient(config =>
+           // If you're just using the authentication client and nothing else, you can use this lightweight version instead.
+           // services.AddAuth0AuthenticationClientCore(domain);
+
+           // Adds the authentication client and provides configuration to be consumed by the management client, token cache, and IHttpClientBuilder integrations
+           services.AddAuth0AuthenticationClient(config =>
             {
                 config.Domain = domain;
                 config.ClientId = Configuration["Auth0:ClientId"];
                 config.ClientSecret = Configuration["Auth0:ClientSecret"];
             });
 
-            // Adds the ManagementApiClient, this will use the same domain as you set above.
-            services.AddAuth0ManagementClient();
+            // Adds the ManagementApiClient with automatic injection of the management token based on the configuration set above.
+            services.AddAuth0ManagementClient().AddManagementTokenInjection();
 
             services.AddGrpc();
         }
@@ -65,6 +74,7 @@ namespace Sample.AspNetCore
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
