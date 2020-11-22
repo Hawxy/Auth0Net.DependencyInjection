@@ -49,8 +49,8 @@ namespace Sample.AspNetCore
            // If you're just using the authentication client and nothing else, you can use this lightweight version instead.
            // services.AddAuth0AuthenticationClientCore(domain);
 
-           // Adds the authentication client and provides configuration to be consumed by the management client, token cache, and IHttpClientBuilder integrations
-           services.AddAuth0AuthenticationClient(config =>
+           // Adds the AuthenticationApiClient client and provides configuration to be consumed by the management client, token cache, and IHttpClientBuilder integrations
+            services.AddAuth0AuthenticationClient(config =>
             {
                 config.Domain = domain;
                 config.ClientId = Configuration["Auth0:ClientId"];

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Auth0Net.DependencyInjection.HttpClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

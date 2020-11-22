@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Sample.ConsoleApp.Services;
@@ -28,10 +27,10 @@ namespace Sample.ConsoleApp
             while (!stoppingToken.IsCancellationRequested)
             {
                var userHttpClient = await _usersService.GetUsersAsync();
-               _logger.LogInformation("HttpClient got user's email: {email}", userHttpClient.First().Email);
+               _logger.LogInformation("HttpClient got user's email: {email}", userHttpClient?.First().Email);
                await Task.Delay(5000, stoppingToken);
 
-               var userGrpcClient = await _usersClient.GetUserAsync(new UserRequest());
+               var userGrpcClient = await _usersClient.GetUserAsync(new UserRequest(), cancellationToken: stoppingToken);
                _logger.LogInformation("HttpClient got user's email: {email}", userGrpcClient.Users.First().Email);
                await Task.Delay(5000, stoppingToken);
             }

@@ -6,7 +6,6 @@ using Auth0Net.DependencyInjection.Cache;
 using Auth0Net.DependencyInjection.HttpClient;
 using Auth0Net.DependencyInjection.Injectables;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
@@ -76,17 +75,14 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         /// <summary>
-        /// Adds a <see cref="DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Machine-to-Machine JWT token to the Authorization header.
+        /// Adds a <see cref="DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Machine-to-Machine Access Token to the Authorization header.
         /// </summary>
-        /// <remarks>
-        /// If no audience is provided, the handler will use the <see cref="HttpRequestMessage"/>'s Absolute Uri as the audience.
-        /// </remarks>
         /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure. </param>
-        /// <param name="config">A delegate that is used to configure the instance of <see cref="Auth0TokenConfig" />.</param>
+        /// <param name="config">A delegate that is used to configure the instance of <see cref="Auth0TokenHandlerConfig" />.</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClient"/>.</returns>
-        public static IHttpClientBuilder AddTokenInjection(this IHttpClientBuilder builder, Action<Auth0TokenConfig>? config = null)
+        public static IHttpClientBuilder AddTokenInjection(this IHttpClientBuilder builder, Action<Auth0TokenHandlerConfig> config)
         {
-            var c = new Auth0TokenConfig();
+            var c = new Auth0TokenHandlerConfig();
             config?.Invoke(c);
 
             builder.Services.TryAddScoped<IAuth0TokenCache, Auth0TokenCache>();
@@ -95,7 +91,7 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         /// <summary>
-        /// Adds a <see cref="DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Management JWT token to the Authorization header.
+        /// Adds a <see cref="DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Management Access Token token to the Authorization header.
         /// </summary>
         /// <remarks>
         /// The domain used to resolve the token is the same as set in <see cref="AddAuth0AuthenticationClient"/>
@@ -105,8 +101,8 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IHttpClientBuilder AddManagementTokenInjection(this IHttpClientBuilder builder)
         {
             builder.Services.TryAddScoped<IAuth0TokenCache, Auth0TokenCache>();
-            return builder.AddHttpMessageHandler(provider => 
-                new Auth0TokenHandler(provider.GetRequiredService<IAuth0TokenCache>(), new Auth0TokenConfig(UriHelpers.GetValidManagementUri(provider.GetRequiredService<IOptionsSnapshot<Auth0Configuration>>().Value.Domain).ToString())));
+            builder.Services.TryAddTransient<Auth0ManagementTokenHandler>();
+            return builder.AddHttpMessageHandler<Auth0ManagementTokenHandler>();
         }
     }
 
