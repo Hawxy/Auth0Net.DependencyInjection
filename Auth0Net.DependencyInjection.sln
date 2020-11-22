@@ -5,9 +5,11 @@ VisualStudioVersion = 16.0.30709.64
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Auth0Net.DependencyInjection", "src\Auth0Net.DependencyInjection\Auth0Net.DependencyInjection.csproj", "{1688937B-298C-42C7-81B9-1091418B2A93}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.ConsoleApp", "samples\Sample.ConsoleApp\Sample.ConsoleApp.csproj", "{7379FE26-47E1-463B-9F84-595E5D510746}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.ConsoleApp", "samples\Sample.ConsoleApp\Sample.ConsoleApp.csproj", "{7379FE26-47E1-463B-9F84-595E5D510746}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.AspNetCore", "samples\Sample.AspNetCore\Sample.AspNetCore.csproj", "{CC41C897-5BBD-4A62-88BE-70275F72AFC1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.AspNetCore", "samples\Sample.AspNetCore\Sample.AspNetCore.csproj", "{CC41C897-5BBD-4A62-88BE-70275F72AFC1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Auth0Net.DependencyInjection.Tests", "tests\Auth0Net.DependencyInjection.Tests\Auth0Net.DependencyInjection.Tests.csproj", "{021A8A83-5A9E-4727-B081-ADFA1EDB0F0F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{CC41C897-5BBD-4A62-88BE-70275F72AFC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC41C897-5BBD-4A62-88BE-70275F72AFC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC41C897-5BBD-4A62-88BE-70275F72AFC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{021A8A83-5A9E-4727-B081-ADFA1EDB0F0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{021A8A83-5A9E-4727-B081-ADFA1EDB0F0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{021A8A83-5A9E-4727-B081-ADFA1EDB0F0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{021A8A83-5A9E-4727-B081-ADFA1EDB0F0F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

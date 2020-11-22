@@ -13,7 +13,7 @@ namespace Sample.ConsoleApp.Services
             _client = client;
         }
 
-        public async Task<User[]> GetUsersAsync() => await _client.GetFromJsonAsync<User[]>("users");
+        public async Task<User[]?> GetUsersAsync() => await _client.GetFromJsonAsync<User[]>("users");
 
         public record User(string Id, string Name, string Email);
     }
