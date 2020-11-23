@@ -1,5 +1,9 @@
 # Auth0.NET Dependency Injection Extensions
 
+<h1 align="center">
+<img align="center" src="https://github.com/Hawxy/Auth0Net.DependencyInjection/blob/v1.0.0/src/Auth0Net.DependencyInjection/Images/icon.png" height="130px" />
+</h1>
+
 Integrating [Auth0.NET](https://github.com/auth0/auth0.net) into your project whilst attempting to follow idiomatic .NET Core conventions isn't exactly straight-forward, and can involve a sizable amount of boilerplate shared between projects. 
 
 This library hopes to solve that problem, featuring:
@@ -41,4 +45,5 @@ I am not affiliated with nor represent Auth0. All implementation issues regardin
 ### Package Logo
 
 Auth0 Logo used under the [MIT License](https://github.com/auth0/identicons/blob/master/LICENSE) from the [Identicons](https://github.com/auth0/identicons) pack.
+
 .NET Logo used under the [Creative Commons 4.0-Share Alike-By License](https://github.com/campusMVP/dotnetLogoPack/blob/main/License-CC-by-sa.md) from the [dotnetLogos](https://github.com/campusMVP/dotnetLogoPack) respository.
