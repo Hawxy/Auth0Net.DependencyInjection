@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Linq;
 using System.Net.Http;
 using Auth0.AuthenticationApi;
 using Auth0.ManagementApi;
@@ -23,10 +24,13 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Use this lightweight integration if you're only using the <see cref="AuthenticationApiClient"/> and no other features of this library. 
         /// </remarks>
         /// <param name="services">The <see cref="IServiceCollection" />.</param>
-        /// <param name="domain"></param>
+        /// <param name="domain">The root domain for your Auth0 tenant.</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientAuthenticationConnection"/>.</returns>
         public static IHttpClientBuilder AddAuth0AuthenticationClientCore(this IServiceCollection services, string domain)
         {
+            if (services.Any(x => x.ServiceType == typeof(AuthenticationApiClient)))
+                throw new InvalidOperationException("AuthenticationApiClient has already been registered!");
+
             services.AddOptions<Auth0Configuration>().Validate(x => !string.IsNullOrWhiteSpace(x.Domain), "Auth0 Domain cannot be null or empty");
             services.Configure<Auth0Configuration>(x=> x.Domain = domain);
 
@@ -47,12 +51,17 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientAuthenticationConnection"/>.</returns>
         public static IHttpClientBuilder AddAuth0AuthenticationClient(this IServiceCollection services, Action<Auth0Configuration> config)
         {
+            if(services.Any(x=> x.ServiceType == typeof(AuthenticationApiClient)))
+                throw new InvalidOperationException("AuthenticationApiClient has already been registered!");
+
             services.AddOptions<Auth0Configuration>()
                 .Validate(x => !string.IsNullOrWhiteSpace(x.ClientId) && !string.IsNullOrWhiteSpace(x.Domain) && !string.IsNullOrWhiteSpace(x.ClientSecret),
                     "Auth0 Configuration cannot have empty values");
             
             services.Configure(config);
             services.AddLazyCache();
+
+            services.AddScoped<IAuth0TokenCache, Auth0TokenCache>();
 
             services.AddScoped<InjectableAuthenticationApiClient>();
             services.AddScoped<AuthenticationApiClient>(x => x.GetRequiredService<InjectableAuthenticationApiClient>());
@@ -83,9 +92,11 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IHttpClientBuilder AddTokenInjection(this IHttpClientBuilder builder, Action<Auth0TokenHandlerConfig> config)
         {
             var c = new Auth0TokenHandlerConfig();
-            config?.Invoke(c);
+            config.Invoke(c);
 
-            builder.Services.TryAddScoped<IAuth0TokenCache, Auth0TokenCache>();
+            if (c.AudienceResolver is null && string.IsNullOrWhiteSpace(c.Audience))
+                throw new ArgumentException("Audience or AudienceResolver must be set");
+
             return builder.AddHttpMessageHandler(provider => 
                 new Auth0TokenHandler(provider.GetRequiredService<IAuth0TokenCache>(), c));
         }
@@ -94,13 +105,12 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Adds a <see cref="DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Management Access Token token to the Authorization header.
         /// </summary>
         /// <remarks>
-        /// The domain used to resolve the token is the same as set in <see cref="AddAuth0AuthenticationClient"/>
+        /// The domain used to resolve the token is the same as set in <see cref="AddAuth0AuthenticationClient"/>.
         /// </remarks>
         /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure.</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClient"/>.</returns>
         public static IHttpClientBuilder AddManagementTokenInjection(this IHttpClientBuilder builder)
         {
-            builder.Services.TryAddScoped<IAuth0TokenCache, Auth0TokenCache>();
             builder.Services.TryAddTransient<Auth0ManagementTokenHandler>();
             return builder.AddHttpMessageHandler<Auth0ManagementTokenHandler>();
         }

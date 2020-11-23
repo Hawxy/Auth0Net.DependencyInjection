@@ -1,7 +1,7 @@
 ﻿namespace Auth0Net.DependencyInjection.Cache
 {
     /// <summary>
-    /// Configuration for the Auth0 Clients and Auth0 Token Cache
+    /// Configuration for the Auth0 Clients and Auth0 Token Cache.
     /// </summary>
     public class Auth0Configuration
     {
