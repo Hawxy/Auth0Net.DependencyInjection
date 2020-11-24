@@ -69,19 +69,26 @@ Ensure your Machine-to-Machine application is authorized to request tokens from 
 
 **Note:** This feature relies on `services.AddAuth0AuthenticationClient(config => ...)` being called and configured as outlined in the previous scenario. 
 
-If you wish to append machine-to-machine tokens to outbound requests from your HTTP services, you can use the `AddAccessToken` extension method along with the required audience:
+This library includes a delegating handler - effectively middleware for your HttpClient - that will append an access token to all outbound requests. This integration requires your service implementation to use `IHttpClientFactory` as part of its registration. You can read more about it [here](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests)
+
+#### HttpClient
+Use `AddAccessToken` along with the required audience:
 
 ```csharp
 services.AddHttpClient<MyHttpService>(x => x.BaseAddress = new Uri(context.Configuration["MyHttpService:Url"]))
         .AddAccessToken(config => config.Audience = context.Configuration["MyHttpService:Audience"]);
 ```
 
-This extension method is compatible with any registration that returns a `IHttpClientBuilder`, thus it can be used with [Grpc's client factory](https://docs.microsoft.com/en-us/aspnet/core/grpc/clientfactory):
+#### Grpc
+
+This extension is compatible with any registration that returns a `IHttpClientBuilder`, thus it can be used with [Grpc's client factory](https://docs.microsoft.com/en-us/aspnet/core/grpc/clientfactory):
 
 ```csharp
 services.AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(context.Configuration["MyGrpcService:Url"]))
         .AddAccessToken(config => config.Audience = context.Configuration["MyGrpcService:Audience"]);
 ```
+
+#### Advanced
 
 `AddAccessToken` also has an option for passing in a func that can resolve the audience at runtime. This can be useful if your expected audiences always follow a pattern, or if you rely on service discovery, such as from [Steeltoe.NET](https://docs.steeltoe.io/api/v3/discovery/discovering-services.html):
 
@@ -103,15 +110,17 @@ In some situations you might want to request an access token from Auth0 manually
 
 ### Utility 
 
-This library exposes a simple string extension, `ToAuth0Uri()`, that can be used to format the Auth0 domain in the correct structure to be used by other ASP.NET functionality. 
+This library exposes a simple string extension, `ToHttpsUrl()`, that can be used to format the naked Auth0 domain sitting in your configuration into a proper URL.
+
+This is identical to `https://{Configuration["Auth0:Domain"]}/` that you usually end up writing _somewhere_ in your `Startup.cs`.
 
 For example, formatting the domain for the JWT Authority:
 
 ```csharp
 .AddJwtBearer(options =>
              {
-                 // "my-tenant.auth0.com" -> "https://my-tenant-auth0.com/"
-                 options.Authority = Configuration["Auth0:Domain"].ToAuth0Uri();
+                 // "my-tenant.auth0.com" -> "https://my-tenant.auth0.com/"
+                 options.Authority = Configuration["Auth0:Domain"].ToHttpsUrl();
                  //...
              });
  ```

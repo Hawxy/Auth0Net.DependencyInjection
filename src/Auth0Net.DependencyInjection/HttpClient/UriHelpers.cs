@@ -10,11 +10,13 @@ namespace Auth0Net.DependencyInjection.HttpClient
         internal static Uri GetValidManagementUri(string domain) => new UriBuilder(domain) { Scheme = Uri.UriSchemeHttps, Path = "api/v2/", Port = 443 }.Uri;
         internal static Uri GetValidUri(string domain) => new UriBuilder(domain) { Scheme = Uri.UriSchemeHttps, Path = "/", Port = 443 }.Uri;
         /// <summary>
-        /// 
+        /// Converts a naked domain into a https URL.
         /// </summary>
-        /// <param name="domain"></param>
-        /// <returns></returns>
-        public static string ToAuth0Uri(this string domain) => GetValidUri(domain).ToString();
-
+        /// <remarks>
+        /// <c>my-auth0-tenant.au.auth0.com</c> --> <c>https://my-auth0-tenant.au.auth0.com/</c>
+        /// </remarks>
+        /// <param name="domain">The domain to convert.</param>
+        /// <returns>The URL in string form.</returns>
+        public static string ToHttpsUrl(this string domain) => GetValidUri(domain).ToString();
     }
 }
