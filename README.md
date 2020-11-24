@@ -8,13 +8,13 @@ Integrating [Auth0.NET](https://github.com/auth0/auth0.net) into your project wh
 
 This library hopes to solve that problem, featuring:
 
- :white_check_mark: Extensions for `Microsoft.Extensions.DependencyInjection`
+ :white_check_mark: Extensions for `Microsoft.Extensions.DependencyInjection`.
  
- :white_check_mark: Automatic access token caching for the Management API and your own REST & Grpc services
+ :white_check_mark: Automatic access token caching for the Management API and your own REST & Grpc services.
  
- :white_check_mark: [HttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests) integration for correct management for the underlying connection
+ :white_check_mark: [HttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests) integration for correct management of the underlying connections.
  
- :white_check_mark: `IHttpClientBuilder` extensions to append access tokens to outgoing requests
+ :white_check_mark: `IHttpClientBuilder` extensions to append access tokens to outgoing requests.
  
  This library supports .NET Core 3.1 & .NET 5.
  
