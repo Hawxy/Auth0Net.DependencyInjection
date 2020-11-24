@@ -1,4 +1,6 @@
 # Auth0.NET Dependency Injection Extensions
+![.NET Core Build & Test](https://github.com/Hawxy/Auth0Net.DependencyInjection/workflows/.NET%20Core%20Build%20&%20Test/badge.svg)
+[![NuGet](https://img.shields.io/nuget/v/Auth0Net.DependencyInjection.svg?style=flat-square)](https://www.nuget.org/packages/Auth0Net.DependencyInjection)
 
 <h1 align="center">
 <img align="center" src="https://github.com/Hawxy/Auth0Net.DependencyInjection/blob/v1.0.0/src/Auth0Net.DependencyInjection/Images/icon.png" height="130px" />
@@ -16,14 +18,15 @@ This library hopes to solve that problem, featuring:
  
  :white_check_mark: `IHttpClientBuilder` extensions, providing handlers to automatically append access tokens to outgoing requests.
  
- This library supports .NET Core 3.1 & .NET 5, and is suitable for use in a standalone .NET Generic Host application or ASP.NET Core.
- 
+ This library supports .NET Core 3.1 & .NET 5, and is suitable for use in ASP.NET Core and any standalone .NET Generic Host application.
  
  ## Install
  
  Add `Auth0Net.DependencyInjection` to your project:
  
- `Install-Package Auth0Net.DependencyInjection`
+ ```ps
+Install-Package Auth0Net.DependencyInjection
+```
  
  ## Scenarios
  
