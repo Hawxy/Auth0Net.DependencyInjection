@@ -58,7 +58,7 @@ namespace Sample.AspNetCore
             });
 
             // Adds the ManagementApiClient with automatic injection of the management token based on the configuration set above.
-            services.AddAuth0ManagementClient().AddManagementTokenInjection();
+            services.AddAuth0ManagementClient().AddManagementAccessToken();
 
             services.AddGrpc();
         }

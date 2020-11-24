@@ -89,7 +89,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure. </param>
         /// <param name="config">A delegate that is used to configure the instance of <see cref="Auth0TokenHandlerConfig" />.</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClient"/>.</returns>
-        public static IHttpClientBuilder AddTokenInjection(this IHttpClientBuilder builder, Action<Auth0TokenHandlerConfig> config)
+        public static IHttpClientBuilder AddAccessToken(this IHttpClientBuilder builder, Action<Auth0TokenHandlerConfig> config)
         {
             var c = new Auth0TokenHandlerConfig();
             config.Invoke(c);
@@ -109,7 +109,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </remarks>
         /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure.</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClient"/>.</returns>
-        public static IHttpClientBuilder AddManagementTokenInjection(this IHttpClientBuilder builder)
+        public static IHttpClientBuilder AddManagementAccessToken(this IHttpClientBuilder builder)
         {
             builder.Services.TryAddTransient<Auth0ManagementTokenHandler>();
             return builder.AddHttpMessageHandler<Auth0ManagementTokenHandler>();

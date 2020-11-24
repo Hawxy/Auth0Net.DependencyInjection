@@ -28,12 +28,12 @@ namespace Sample.ConsoleApp
                     // Automatically add the authorization header with our token on every outgoing request
                     collection
                         .AddHttpClient<UsersService>(x => x.BaseAddress = new Uri(context.Configuration["AspNetCore:Url"]))
-                        .AddTokenInjection(config => config.Audience = context.Configuration["AspNetCore:Audience"]);
+                        .AddAccessToken(config => config.Audience = context.Configuration["AspNetCore:Audience"]);
 
                     // Works for the Grpc integration too!
                     collection
                         .AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(context.Configuration["AspNetCore:Url"]))
-                        .AddTokenInjection(config => config.Audience = context.Configuration["AspNetCore:Audience"]);
+                        .AddAccessToken(config => config.Audience = context.Configuration["AspNetCore:Audience"]);
 
                     collection.AddHostedService<PumpingBackgroundService>();
 
