@@ -35,7 +35,7 @@ services.AddAuth0AuthenticationClient(config =>
 Add the `ManagementApiClient`, along with with the `DelegatingHandler` that will inject the Access Token automatically:
 
 ```csharp
-services.AddAuth0ManagementClient().AddManagementTokenInjection();
+services.AddAuth0ManagementClient().AddManagementAccessToken();
 ```
 
 ## Disclaimer

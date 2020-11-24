@@ -53,7 +53,7 @@ namespace Auth0Net.DependencyInjection.Tests
             Assert.NotNull(authenticationHttpClient);
 
             var configuration = provider.GetService<IOptions<Auth0Configuration>>();
-
+            Assert.NotNull(configuration);
             Assert.Equal(domain, configuration.Value.Domain);
         }
 
@@ -124,12 +124,16 @@ namespace Auth0Net.DependencyInjection.Tests
         }
 
         [Fact]
-        public void AddTokenInjection_Rejects_InvalidConfig()
+        public void AddAccessToken_Rejects_InvalidConfig()
         {
             Assert.Throws<ArgumentException>(() =>
-                new ServiceCollection().AddAuth0AuthenticationClient(x => { }).AddTokenInjection(x => { }));
+                new ServiceCollection().AddHttpClient<DummyClass>(x => { }).AddAccessToken(x => { }));
         }
 
+    }
+
+    public class DummyClass
+    {
     }
 
 }
