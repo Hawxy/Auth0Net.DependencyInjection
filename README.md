@@ -16,7 +16,7 @@ This library hopes to solve that problem, featuring:
  
  :white_check_mark: `IHttpClientBuilder` extensions to append access tokens to outgoing requests.
  
- This library supports .NET Core 3.1 & .NET 5.
+ This library supports .NET Core 3.1 & .NET 5, and is suitable for use in a standalone .NET Generic Host application or ASP.NET Core.
  
  
  ## Install
@@ -41,7 +41,7 @@ services.AddAuth0AuthenticationClientCore("your-auth0-domain.auth0.com");
  
 ![Auth0 Authentication & Management](docs/images/Auth0Authentication+Management.png?raw=true)
  
-Add the `AuthenticationApiClient` with `AddAuth0AuthenticationClient`, and provide the configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations. This extension **must** be called before using any other extensions within this library:
+Add the `AuthenticationApiClient` with `AddAuth0AuthenticationClient`, and provide a machine-to-machine application configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations. This extension **must** be called before using any other extensions within this library:
  
  ```csharp
 services.AddAuth0AuthenticationClient(config =>
@@ -85,6 +85,10 @@ services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MySer
         .AddServiceDiscovery()
         .AddAccessToken(config => config.AudienceResolver = request => request.RequestUri.GetLeftPart(UriPartial.Authority));
 ```
+
+### Samples
+
+Both a .NET Generic Host and ASP.NET Core example are available in the [samples](https://github.com/Hawxy/Auth0Net.DependencyInjection/tree/main/samples) directory
 
 ### Advanced
 
