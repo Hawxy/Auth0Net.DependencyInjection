@@ -10,11 +10,11 @@ This library hopes to solve that problem, featuring:
 
  :white_check_mark: Extensions for `Microsoft.Extensions.DependencyInjection`.
  
- :white_check_mark: Automatic access token caching for the Management API and your own REST & Grpc services.
+ :white_check_mark: Automatic access token caching & renewal for the Management API and your own REST & Grpc services
  
- :white_check_mark: [HttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests) integration for correct management of the underlying connections.
+ :white_check_mark: [HttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests) integration for enhanced extensibility and correct management of the underlying HTTP connections.
  
- :white_check_mark: `IHttpClientBuilder` extensions to append access tokens to outgoing requests.
+ :white_check_mark: `IHttpClientBuilder` extensions, providing handlers to automatically append access tokens to outgoing requests.
  
  This library supports .NET Core 3.1 & .NET 5, and is suitable for use in a standalone .NET Generic Host application or ASP.NET Core.
  
@@ -64,7 +64,7 @@ services.AddAuth0ManagementClient().AddManagementAccessToken();
 
 **Note:** This feature relies on `services.AddAuth0AuthenticationClient(config => ...)` being called and configured as outlined in the previous scenario. 
 
-If you wish to append machine-to-machine tokens to outbound requests from your HTTP services, you can use the `AddAccessToken` extension method along with your service's audience:
+If you wish to append machine-to-machine tokens to outbound requests from your HTTP services, you can use the `AddAccessToken` extension method along with the required audience:
 
 ```csharp
 services.AddHttpClient<MyHttpService>(x => x.BaseAddress = new Uri(context.Configuration["MyHttpService:Url"]))
@@ -78,7 +78,7 @@ services.AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(c
         .AddAccessToken(config => config.Audience = context.Configuration["MyGrpcService:Audience"]);
 ```
 
-`AddAccessToken` also has an option for passing in a func that can resolve the audience at runtime. This can be useful if your audiences always follow a pattern, or if you rely on service discovery, such as from [Steeltoe.NET](https://docs.steeltoe.io/api/v3/discovery/discovering-services.html):
+`AddAccessToken` also has an option for passing in a func that can resolve the audience at runtime. This can be useful if your expected audiences always follow a pattern, or if you rely on service discovery, such as from [Steeltoe.NET](https://docs.steeltoe.io/api/v3/discovery/discovering-services.html):
 
 ```csharp
 services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MyServiceName/"))
