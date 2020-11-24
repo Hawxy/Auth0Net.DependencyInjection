@@ -18,7 +18,7 @@ This library hopes to solve that problem, featuring:
  
  :white_check_mark: `IHttpClientBuilder` extensions, providing handlers to automatically append access tokens to outgoing requests.
  
- This library supports .NET Core 3.1 & .NET 5, and is suitable for use in ASP.NET Core and any standalone .NET Generic Host application.
+ This library supports .NET Core 3.1 & .NET 5, and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
  
  ## Install
  
@@ -44,7 +44,7 @@ services.AddAuth0AuthenticationClientCore("your-auth0-domain.auth0.com");
  
 ![Auth0 Authentication & Management](docs/images/Auth0Authentication+Management.png?raw=true)
  
-Add the `AuthenticationApiClient` with `AddAuth0AuthenticationClient`, and provide a machine-to-machine application configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations. This extension **must** be called before using any other extensions within this library:
+Add the `AuthenticationApiClient` with `AddAuth0AuthenticationClient`, and provide a [machine-to-machine application](https://auth0.com/docs/applications/set-up-an-application/register-machine-to-machine-applications) configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations. This extension **must** be called before using any other extensions within this library:
  
  ```csharp
 services.AddAuth0AuthenticationClient(config =>
@@ -60,6 +60,8 @@ Add the `ManagementApiClient` with `AddAuth0ManagementClient()` and add the `Del
 ```csharp
 services.AddAuth0ManagementClient().AddManagementAccessToken();
 ```
+
+Ensure your Machine-to-Machine application is authorized to request tokens from the Managment API and it has the correct scopes for the features you wish to use.
 
 ### With HttpClient and/or Grpc Services
 
@@ -91,17 +93,34 @@ services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MySer
 
 ### Samples
 
-Both a .NET Generic Host and ASP.NET Core example are available in the [samples](https://github.com/Hawxy/Auth0Net.DependencyInjection/tree/main/samples) directory
+Both a .NET Generic Host and ASP.NET Core example are available in the [samples](https://github.com/Hawxy/Auth0Net.DependencyInjection/tree/main/samples) directory.
 
-### Advanced
+### Internal Cache
+
+The `Auth0TokenCache` will  a token for a given audience 5 minutes before expiry. 
 
 In some situations you might want to request an access token from Auth0 manually. You can achieve this by injecting `IAuth0TokenCache` into a class and calling `GetTokenAsync` with the audience of the API you're requesting the token for.
+
+### Utility 
+
+This library exposes a simple string extension, `ToAuth0Uri()`, that can be used to format the Auth0 domain in the correct structure to be used by other ASP.NET functionality. 
+
+For example, formatting the domain for the JWT Authority:
+
+```csharp
+.AddJwtBearer(options =>
+             {
+                 // "my-tenant.auth0.com" -> "https://my-tenant-auth0.com/"
+                 options.Authority = Configuration["Auth0:Domain"].ToAuth0Uri();
+                 //...
+             });
+ ```
 
 ## Disclaimer
 
 I am not affiliated with nor represent Auth0. All implementation issues regarding the underlying `ManagementApiClient` and `AuthenticationApiClient` should go to the official [Auth0.NET Respository](https://github.com/auth0/auth0.net).
 
-### License notice
+### License notices
 
 Icons used under the [MIT License](https://github.com/auth0/identicons/blob/master/LICENSE) from the [Identicons](https://github.com/auth0/identicons) pack.
 
