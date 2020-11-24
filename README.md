@@ -4,7 +4,7 @@
 <img align="center" src="https://github.com/Hawxy/Auth0Net.DependencyInjection/blob/v1.0.0/src/Auth0Net.DependencyInjection/Images/icon.png" height="130px" />
 </h1>
 
-Integrating [Auth0.NET](https://github.com/auth0/auth0.net) into your project whilst attempting to follow idiomatic .NET Core conventions isn't exactly straight-forward, and can involve a sizable amount of boilerplate shared between projects. 
+Integrating [Auth0.NET](https://github.com/auth0/auth0.net) into your project whilst attempting to follow idiomatic .NET Core conventions can be cumbersome and involve a sizable amount of boilerplate shared between projects. 
 
 This library hopes to solve that problem, featuring:
 
@@ -21,7 +21,7 @@ This library hopes to solve that problem, featuring:
  
  ## Install
  
- Add `Auth0Net.DependencyInjection` to your project from nuget:
+ Add `Auth0Net.DependencyInjection` to your project:
  
  `Install-Package Auth0Net.DependencyInjection`
  
@@ -31,7 +31,7 @@ This library hopes to solve that problem, featuring:
  
 ![Auth0 Authentication](docs/images/Auth0Authentication.png?raw=true)
  
-If you're simply using the `AuthenticationApiClient` (ie for URL building and requests driven by the user's access token), I've provided a lightweight integration:
+If you're simply using the `AuthenticationApiClient` (ie for URL building and requests driven by the user's access token), you can call `AddAuth0AuthenticationClientCore` and pass in your Auth0 Domain. This integration is lightweight and does not support any other features of this library. 
  
  ```csharp
 services.AddAuth0AuthenticationClientCore("your-auth0-domain.auth0.com");
@@ -41,7 +41,7 @@ services.AddAuth0AuthenticationClientCore("your-auth0-domain.auth0.com");
  
 ![Auth0 Authentication & Management](docs/images/Auth0Authentication+Management.png?raw=true)
  
-Add the `AuthenticationApiClient` with `AddAuth0AuthenticationClient`, and provide the configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations:
+`AddAuth0AuthenticationClient` is required if you plan to use any of this libraries features. Add it with `AddAuth0AuthenticationClient`, and provide the configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations:
  
  ```csharp
 services.AddAuth0AuthenticationClient(config =>
@@ -85,6 +85,10 @@ services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MySer
         .AddServiceDiscovery()
         .AddAccessToken(config => config.AudienceResolver = request => request.RequestUri.GetLeftPart(UriPartial.Authority));
 ```
+
+### Advanced
+
+In some situations you might want to request an access token from Auth0 manually. You can achieve this by injecting `IAuth0TokenCache` into a class and calling `GetTokenAsync` with the audience of the API you're requesting the token for.
 
 ## Disclaimer
 
