@@ -110,7 +110,9 @@ In some situations you might want to request an access token from Auth0 manually
 
 ### Utility 
 
-This library exposes a simple string extension, `ToAuth0Uri()`, that can be used to format a naked Auth0 domain into the proper URL.
+This library exposes a simple string extension, `ToHttpsUrl()`, that can be used to format the naked Auth0 domain sitting in your configuration into a proper URL.
+
+This is identical to `https://{Configuration["Auth0:Domain"]}/` that you usually end up writing _somewhere_ in your `Startup.cs`.
 
 For example, formatting the domain for the JWT Authority:
 
@@ -118,7 +120,7 @@ For example, formatting the domain for the JWT Authority:
 .AddJwtBearer(options =>
              {
                  // "my-tenant.auth0.com" -> "https://my-tenant.auth0.com/"
-                 options.Authority = Configuration["Auth0:Domain"].ToAuth0Uri();
+                 options.Authority = Configuration["Auth0:Domain"].ToHttpsUrl();
                  //...
              });
  ```
