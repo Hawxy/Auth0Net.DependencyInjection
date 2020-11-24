@@ -17,7 +17,6 @@ namespace Auth0Net.DependencyInjection.HttpClient
         /// </remarks>
         /// <param name="domain">The domain to convert.</param>
         /// <returns>The URL in string form.</returns>
-        public static string ToHttpsUri(this string domain) => GetValidUri(domain).ToString();
-
+        public static string ToHttpsUrl(this string domain) => GetValidUri(domain).ToString();
     }
 }
