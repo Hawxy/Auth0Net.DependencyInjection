@@ -31,7 +31,7 @@ This library hopes to solve that problem, featuring:
  
 ![Auth0 Authentication](docs/images/Auth0Authentication.png?raw=true)
  
-If you're simply using the `AuthenticationApiClient` (ie for URL building and requests driven by the user's access token), you can call `AddAuth0AuthenticationClientCore` and pass in your Auth0 Domain. This integration is lightweight and does not support any other features of this library. 
+If you're simply using the `AuthenticationApiClient` and nothing else, you can call `AddAuth0AuthenticationClientCore` and pass in your Auth0 Domain. This integration is lightweight and does not support any other features of this library. 
  
  ```csharp
 services.AddAuth0AuthenticationClientCore("your-auth0-domain.auth0.com");
@@ -41,7 +41,7 @@ services.AddAuth0AuthenticationClientCore("your-auth0-domain.auth0.com");
  
 ![Auth0 Authentication & Management](docs/images/Auth0Authentication+Management.png?raw=true)
  
-`AddAuth0AuthenticationClient` is required if you plan to use any of this libraries features. Add it with `AddAuth0AuthenticationClient`, and provide the configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations:
+Add the `AuthenticationApiClient` with `AddAuth0AuthenticationClient`, and provide the configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations. This extension **must** be called before using any other extensions within this library:
  
  ```csharp
 services.AddAuth0AuthenticationClient(config =>
@@ -62,7 +62,7 @@ services.AddAuth0ManagementClient().AddManagementAccessToken();
 
 ![Auth0 All](docs/images/Auth0All.png?raw=true)
 
-**Note:** This feature relies on `services.AddAuth0AuthenticationClient(config => ...)` being called and configured as outlined in the previous example. 
+**Note:** This feature relies on `services.AddAuth0AuthenticationClient(config => ...)` being called and configured as outlined in the previous scenario. 
 
 If you wish to append machine-to-machine tokens to outbound requests from your HTTP services, you can use the `AddAccessToken` extension method along with your service's audience:
 
