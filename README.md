@@ -12,14 +12,30 @@ This library hopes to solve that problem, featuring:
  
  :white_check_mark: Automatic access token caching for the Management API and your own REST & Grpc services
  
- :white_check_mark: [HttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests) integration with handlers to append JWTs to outgoing requests.
+ :white_check_mark: [HttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests) integration for correct management for the underlying connection
+ 
+ :white_check_mark: `IHttpClientBuilder` extensions to append access tokens to outgoing requests
  
  This library supports .NET Core 3.1 & .NET 5.
  
  
- ## Typical Setup
+ ## Install
  
- Install `Auth0Net.DependencyInjection` from Nuget into your .NET Core application.
+ Add `Auth0Net.DependencyInjection` to your project from nuget:
+ 
+ `Install-Package Auth0Net.DependencyInjection`
+ 
+ ## Scenarios
+ 
+ ### Authentication Client Only
+ 
+ If you're simply using the `AuthenticationApiClient` (ie for URL building and requests driven by the user's access token), I've provided a lightweight integration:
+ 
+ ```csharp
+services.AddAuth0AuthenticationClientCore("your-auth0-domain.auth0.com");
+```
+
+### Typical 
  
  Add the `AuthenticationApiClient`, and provide the configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations:
  
@@ -32,7 +48,7 @@ services.AddAuth0AuthenticationClient(config =>
 });
 ```
 
-Add the `ManagementApiClient`, along with with the `DelegatingHandler` that will inject the Access Token automatically:
+Add the `ManagementApiClient`, along with with the `DelegatingHandler` that will append the Access Token automatically:
 
 ```csharp
 services.AddAuth0ManagementClient().AddManagementAccessToken();
