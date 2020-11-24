@@ -24,7 +24,7 @@ namespace Sample.AspNetCore
             services.AddControllers();
 
             // An extension method is included to convert a naked auth0 domain (my-tenant.auth0.au.com) to the correct format (https://my-tenant-auth0.au.com/)
-            string domain = Configuration["Auth0:Domain"].ToAuth0Uri();
+            string domain = Configuration["Auth0:Domain"].ToHttpsUri();
 
             // Equivalent to 
             // string domain = $"https://{Configuration["Auth0:Domain"]}/";
