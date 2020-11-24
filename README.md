@@ -14,7 +14,7 @@ This library hopes to solve that problem, featuring:
  
  :white_check_mark: Automatic access token caching & renewal for the Management API and your own REST & Grpc services
  
- :white_check_mark: [HttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests) integration for enhanced extensibility and correct management of the underlying HTTP connections.
+ :white_check_mark: [HttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests) integration for centralized extensibility and management of the internal HTTP handlers.
  
  :white_check_mark: `IHttpClientBuilder` extensions, providing handlers to automatically append access tokens to outgoing requests.
  
