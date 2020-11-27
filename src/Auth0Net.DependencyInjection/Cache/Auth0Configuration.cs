@@ -20,8 +20,8 @@ namespace Auth0Net.DependencyInjection.Cache
         /// </summary>
         public string? ClientSecret { get; set; }
         /// <summary>
-        /// The time before access token expiry that the token should be renewed. The default is 30 minutes.
+        /// The time before access token expiry that the token should be renewed. The default is 30 minutes. 
         /// </summary>
-        public TimeSpan RenewTokenAt { get; set; } = TimeSpan.FromMinutes(30);
+        public TimeSpan TokenExpiryBuffer { get; set; } = TimeSpan.FromMinutes(30);
     }
 }

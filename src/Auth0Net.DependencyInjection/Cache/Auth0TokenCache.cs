@@ -47,7 +47,7 @@ namespace Auth0Net.DependencyInjection.Cache
 
                 var response = await _client.GetTokenAsync(tokenRequest);
 
-                e.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(response.ExpiresIn).Subtract(_config.RenewTokenAt);
+                e.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(response.ExpiresIn).Subtract(_config.TokenExpiryBuffer);
                 return response.AccessToken;
             });
         }

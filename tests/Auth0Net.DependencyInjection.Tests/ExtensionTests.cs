@@ -96,7 +96,7 @@ namespace Auth0Net.DependencyInjection.Tests
                 x.Domain = domain;
                 x.ClientId = clientId;
                 x.ClientSecret = clientSecret;
-                x.RenewTokenAt = renewal;
+                x.TokenExpiryBuffer = renewal;
             }).Services;
 
             var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(AuthenticationApiClient));
@@ -123,7 +123,7 @@ namespace Auth0Net.DependencyInjection.Tests
             Assert.Equal(domain, configuration.Value.Domain);
             Assert.Equal(clientId, configuration.Value.ClientId);
             Assert.Equal(clientSecret, configuration.Value.ClientSecret);
-            Assert.Equal(renewal, configuration.Value.RenewTokenAt);
+            Assert.Equal(renewal, configuration.Value.TokenExpiryBuffer);
         }
 
         [Fact]
