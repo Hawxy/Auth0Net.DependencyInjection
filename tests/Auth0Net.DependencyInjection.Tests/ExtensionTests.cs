@@ -89,12 +89,14 @@ namespace Auth0Net.DependencyInjection.Tests
             var domain = "test.au.auth0.com";
             var clientId = "fake-id";
             var clientSecret = "fake-secret";
+            var renewal = TimeSpan.FromMinutes(60);
 
             var services = new ServiceCollection().AddAuth0AuthenticationClient(x =>
             {
                 x.Domain = domain;
                 x.ClientId = clientId;
                 x.ClientSecret = clientSecret;
+                x.TokenExpiryBuffer = renewal;
             }).Services;
 
             var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(AuthenticationApiClient));
@@ -121,6 +123,7 @@ namespace Auth0Net.DependencyInjection.Tests
             Assert.Equal(domain, configuration.Value.Domain);
             Assert.Equal(clientId, configuration.Value.ClientId);
             Assert.Equal(clientSecret, configuration.Value.ClientSecret);
+            Assert.Equal(renewal, configuration.Value.TokenExpiryBuffer);
         }
 
         [Fact]

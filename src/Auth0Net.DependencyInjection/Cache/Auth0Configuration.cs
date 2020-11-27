@@ -1,4 +1,6 @@
-﻿namespace Auth0Net.DependencyInjection.Cache
+﻿using System;
+
+namespace Auth0Net.DependencyInjection.Cache
 {
     /// <summary>
     /// Configuration for the Auth0 Clients and Auth0 Token Cache.
@@ -17,5 +19,9 @@
         /// The Client Secret of the Auth0 Machine-to-Machine application.
         /// </summary>
         public string? ClientSecret { get; set; }
+        /// <summary>
+        /// The time before access token expiry that the token should be renewed. The default is 30 minutes. 
+        /// </summary>
+        public TimeSpan TokenExpiryBuffer { get; set; } = TimeSpan.FromMinutes(30);
     }
 }

@@ -104,7 +104,7 @@ Both a .NET Generic Host and ASP.NET Core example are available in the [samples]
 
 ### Internal Cache
 
-The `Auth0TokenCache` will cache a token for a given audience until 5 minutes before expiry. 
+The `Auth0TokenCache` will cache a token for a given audience until 30 minutes before expiry. You can increase or decrease this by setting the `TokenExpiryBuffer` on the `Auth0Configuration`.
 
 In some situations you might want to request an access token from Auth0 manually. You can achieve this by injecting `IAuth0TokenCache` into a class and calling `GetTokenAsync` with the audience of the API you're requesting the token for.
 

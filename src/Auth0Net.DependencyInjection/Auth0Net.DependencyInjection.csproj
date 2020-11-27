@@ -4,7 +4,7 @@
     <TargetFrameworks>netstandard2.1;net5</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Authors>Hawxy</Authors>
     <Description>Dependency Injection, HttpClientFactory &amp; ASP.NET Core extensions for Auth0.NET</Description>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
