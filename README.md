@@ -40,11 +40,25 @@ If you're simply using the `AuthenticationApiClient` and nothing else, you can c
 services.AddAuth0AuthenticationClientCore("your-auth0-domain.auth0.com");
 ```
 
+You can then request the `IAuthenticationApiClient` within your class:
+
+```csharp
+
+public class MyController : ControllerBase
+{
+    private readonly IAuthenticationApiClient _authenticationApiClient;
+
+    public UsersController(IAuthenticationApiClient authenticationApiClient)
+    {
+        _authenticationApiClient = authenticationApiClient;
+    }
+ ```
+
 ### Authentication Client + Management Client 
  
 ![Auth0 Authentication & Management](docs/images/Auth0Authentication+Management.png?raw=true)
  
-Add the `AuthenticationApiClient` with `AddAuth0AuthenticationClient`, and provide a [machine-to-machine application](https://auth0.com/docs/applications/set-up-an-application/register-machine-to-machine-applications) configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations. This extension **must** be called before using any other extensions within this library:
+Add the `AuthenticationApiClient ` with `AddAuth0AuthenticationClient`, and provide a [machine-to-machine application](https://auth0.com/docs/applications/set-up-an-application/register-machine-to-machine-applications) configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations. This extension **must** be called before using any other extensions within this library:
  
  ```csharp
 services.AddAuth0AuthenticationClient(config =>
