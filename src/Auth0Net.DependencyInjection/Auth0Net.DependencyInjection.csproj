@@ -21,6 +21,7 @@
     <PackageReference Include="Auth0.AuthenticationApi" Version="7.3.2" />
     <PackageReference Include="Auth0.ManagementApi" Version="7.3.2" />
     <PackageReference Include="LazyCache.AspNetCore" Version="2.1.2" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
