@@ -28,15 +28,13 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientAuthenticationConnection"/>.</returns>
         public static IHttpClientBuilder AddAuth0AuthenticationClientCore(this IServiceCollection services, string domain)
         {
-            if (services.Any(x => x.ServiceType == typeof(AuthenticationApiClient)))
+            if (services.Any(x => x.ServiceType == typeof(IAuthenticationApiClient)))
                 throw new InvalidOperationException("AuthenticationApiClient has already been registered!");
 
             services.AddOptions<Auth0Configuration>().Validate(x => !string.IsNullOrWhiteSpace(x.Domain), "Auth0 Domain cannot be null or empty");
             services.Configure<Auth0Configuration>(x=> x.Domain = domain);
 
-            services.AddScoped<InjectableAuthenticationApiClient>();
-            services.AddScoped<AuthenticationApiClient>(x => x.GetRequiredService<InjectableAuthenticationApiClient>());
-
+            services.AddScoped<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
             return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>();
         }
 
@@ -51,7 +49,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientAuthenticationConnection"/>.</returns>
         public static IHttpClientBuilder AddAuth0AuthenticationClient(this IServiceCollection services, Action<Auth0Configuration> config)
         {
-            if(services.Any(x=> x.ServiceType == typeof(AuthenticationApiClient)))
+            if(services.Any(x=> x.ServiceType == typeof(IAuthenticationApiClient)))
                 throw new InvalidOperationException("AuthenticationApiClient has already been registered!");
 
             services.AddOptions<Auth0Configuration>()
@@ -63,8 +61,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.AddScoped<IAuth0TokenCache, Auth0TokenCache>();
 
-            services.AddScoped<InjectableAuthenticationApiClient>();
-            services.AddScoped<AuthenticationApiClient>(x => x.GetRequiredService<InjectableAuthenticationApiClient>());
+            services.AddScoped<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
             return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>();
         }
         /// <summary>

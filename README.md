@@ -40,6 +40,20 @@ If you're simply using the `AuthenticationApiClient` and nothing else, you can c
 services.AddAuth0AuthenticationClientCore("your-auth0-domain.auth0.com");
 ```
 
+You can then request the `IAuthenticationApiClient` within your class:
+
+```csharp
+
+public class AuthController : ControllerBase
+{
+    private readonly IAuthenticationApiClient _authenticationApiClient;
+
+    public AuthController(IAuthenticationApiClient authenticationApiClient)
+    {
+        _authenticationApiClient = authenticationApiClient;
+    }
+ ```
+
 ### Authentication Client + Management Client 
  
 ![Auth0 Authentication & Management](docs/images/Auth0Authentication+Management.png?raw=true)
