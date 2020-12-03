@@ -49,10 +49,10 @@ namespace Auth0Net.DependencyInjection.Cache
 
                 var response = await _client.GetTokenAsync(tokenRequest);
 
-                var expiry = TimeSpan.FromSeconds(response.ExpiresIn).Subtract(_config.TokenExpiryBuffer);
+                var expiry = DateTimeOffset.UtcNow.Add(TimeSpan.FromSeconds(response.ExpiresIn).Subtract(_config.TokenExpiryBuffer));
                 _logger.LogTrace("Auth0 Token for audience {audience} will expire at {expiry}", audience, expiry);
 
-                e.SetAbsoluteExpiration(DateTimeOffset.UtcNow.Add(expiry));
+                e.SetAbsoluteExpiration(expiry);
 
                 return response.AccessToken;
             });
