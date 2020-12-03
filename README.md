@@ -44,11 +44,11 @@ You can then request the `IAuthenticationApiClient` within your class:
 
 ```csharp
 
-public class MyController : ControllerBase
+public class AuthController : ControllerBase
 {
     private readonly IAuthenticationApiClient _authenticationApiClient;
 
-    public UsersController(IAuthenticationApiClient authenticationApiClient)
+    public AuthController(IAuthenticationApiClient authenticationApiClient)
     {
         _authenticationApiClient = authenticationApiClient;
     }
