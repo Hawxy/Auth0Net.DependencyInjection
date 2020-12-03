@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Auth0.AuthenticationApi;
 using Auth0Net.DependencyInjection.Cache;
+using Auth0Net.DependencyInjection.Injectables;
 using LazyCache;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -16,7 +17,7 @@ namespace Auth0Net.DependencyInjection.Tests
         {
             var services = new ServiceCollection().AddAuth0AuthenticationClientCore("").Services.BuildServiceProvider();
 
-            Assert.Throws<OptionsValidationException>(() => services.GetRequiredService<AuthenticationApiClient>());
+            Assert.Throws<OptionsValidationException>(() => services.GetRequiredService<IAuthenticationApiClient>());
         }
 
         [Fact]
@@ -39,15 +40,17 @@ namespace Auth0Net.DependencyInjection.Tests
 
             var services = new ServiceCollection().AddAuth0AuthenticationClientCore(domain).Services;
 
-            var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(AuthenticationApiClient));
+            var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(IAuthenticationApiClient) 
+                                                                 && x.ImplementationType == typeof(InjectableAuthenticationApiClient));
 
             Assert.NotNull(serviceDescriptor);
             Assert.Equal(ServiceLifetime.Scoped, ServiceLifetime.Scoped);
             
             var provider = services.BuildServiceProvider();
 
-            var authenticationClient = provider.GetService<AuthenticationApiClient>();
+            var authenticationClient = provider.GetService<IAuthenticationApiClient>();
             Assert.NotNull(authenticationClient);
+            Assert.IsType<InjectableAuthenticationApiClient>(authenticationClient);
 
             var authenticationHttpClient = provider.GetService<IAuthenticationConnection>();
             Assert.NotNull(authenticationHttpClient);
@@ -80,7 +83,7 @@ namespace Auth0Net.DependencyInjection.Tests
                 x.ClientSecret = "";
             }).Services.BuildServiceProvider();
 
-            Assert.Throws<OptionsValidationException>(() =>  services.GetRequiredService<AuthenticationApiClient>());
+            Assert.Throws<OptionsValidationException>(() =>  services.GetRequiredService<IAuthenticationApiClient>());
         }
 
         [Fact]
@@ -99,15 +102,16 @@ namespace Auth0Net.DependencyInjection.Tests
                 x.TokenExpiryBuffer = renewal;
             }).Services;
 
-            var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(AuthenticationApiClient));
+            var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(IAuthenticationApiClient));
 
             Assert.NotNull(serviceDescriptor);
             Assert.Equal(ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             var provider = services.BuildServiceProvider();
 
-            var authenticationClient = provider.GetService<AuthenticationApiClient>();
+            var authenticationClient = provider.GetService<IAuthenticationApiClient>();
             Assert.NotNull(authenticationClient);
+            Assert.IsType<InjectableAuthenticationApiClient>(authenticationClient);
 
             var authenticationHttpClient = provider.GetService<IAuthenticationConnection>();
             Assert.NotNull(authenticationHttpClient);
