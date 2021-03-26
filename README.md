@@ -1,6 +1,7 @@
 # Auth0.NET Dependency Injection Extensions
 ![.NET Core Build & Test](https://github.com/Hawxy/Auth0Net.DependencyInjection/workflows/.NET%20Core%20Build%20&%20Test/badge.svg)
 [![NuGet](https://img.shields.io/nuget/v/Auth0Net.DependencyInjection.svg?style=flat-square)](https://www.nuget.org/packages/Auth0Net.DependencyInjection)
+[![deepcode](https://www.deepcode.ai/api/gh/badge?key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwbGF0Zm9ybTEiOiJnaCIsIm93bmVyMSI6Ikhhd3h5IiwicmVwbzEiOiJBdXRoME5ldC5EZXBlbmRlbmN5SW5qZWN0aW9uIiwiaW5jbHVkZUxpbnQiOmZhbHNlLCJhdXRob3JJZCI6MjczMDcsImlhdCI6MTYxNjczOTcyNH0.4StSyQGHntE1YwSsXjjvRtfJJRSvyUNn43YWT1_FHkU)](https://www.deepcode.ai/app/gh/Hawxy/Auth0Net.DependencyInjection/_/dashboard?utm_content=gh%2FHawxy%2FAuth0Net.DependencyInjection)
 
 <h1 align="center">
 <img align="center" src="src/Auth0Net.DependencyInjection/Images/icon.png" height="130px" />
@@ -76,6 +77,20 @@ services.AddAuth0ManagementClient().AddManagementAccessToken();
 ```
 
 Ensure your Machine-to-Machine application is authorized to request tokens from the Managment API and it has the correct scopes for the features you wish to use.
+
+You can then request the `ManagementApiClient` (or `IAuthenticationApiClient`) within your services:
+
+```csharp
+
+public class MyAuth0Service : IAuth0Service
+{
+    private readonly ManagementApiClient _managementApiClient;
+
+    public AuthController(ManagementApiClient managementApiClient)
+    {
+        _managementApiClient = managementApiClient;
+    }
+ ```
 
 ### With HttpClient and/or Grpc Services
 
