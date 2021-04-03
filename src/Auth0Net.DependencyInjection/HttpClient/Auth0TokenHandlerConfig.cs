@@ -28,7 +28,7 @@ namespace Auth0Net.DependencyInjection.HttpClient
         public Auth0TokenHandlerConfig() { }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="Auth0TokenHandlerConfig"/> with no Audience set.
+        /// Initializes a new instance of <see cref="Auth0TokenHandlerConfig"/>.
         /// </summary>
         public Auth0TokenHandlerConfig(string audience)
         {
