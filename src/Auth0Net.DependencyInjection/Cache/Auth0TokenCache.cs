@@ -19,7 +19,7 @@ namespace Auth0Net.DependencyInjection.Cache
         private readonly Auth0Configuration _config;
 
         /// <summary>
-        /// An implementation of <see cref="IAuth0TokenCache"/> that caches Auth0 Access Tokens until 5 minutes before expiry
+        /// An implementation of <see cref="IAuth0TokenCache"/> that caches and renews Auth0 Access Tokens
         /// </summary>
         /// <param name="client">The Authentication Client</param>
         /// <param name="cache">An application cache from LazyCache </param>
