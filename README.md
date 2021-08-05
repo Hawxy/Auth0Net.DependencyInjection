@@ -7,6 +7,10 @@
 <img align="center" src="src/Auth0Net.DependencyInjection/Images/icon.png" height="130px" />
 </h1>
 
+<h1 align="center">
+<img align="center" src="https://user-images.githubusercontent.com/975824/128343470-8d97e39d-ff8a-4daf-8ebf-f9039a46abd6.png" height="130px" />
+</h1>
+
 Integrating [Auth0.NET](https://github.com/auth0/auth0.net) into your project whilst attempting to follow idiomatic .NET Core conventions can be cumbersome and involve a sizable amount of boilerplate shared between projects. 
 
 This library hopes to solve that problem, featuring:
