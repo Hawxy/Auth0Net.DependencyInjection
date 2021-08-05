@@ -4,10 +4,6 @@
 [![deepcode](https://www.deepcode.ai/api/gh/badge?key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwbGF0Zm9ybTEiOiJnaCIsIm93bmVyMSI6Ikhhd3h5IiwicmVwbzEiOiJBdXRoME5ldC5EZXBlbmRlbmN5SW5qZWN0aW9uIiwiaW5jbHVkZUxpbnQiOmZhbHNlLCJhdXRob3JJZCI6MjczMDcsImlhdCI6MTYxNjczOTcyNH0.4StSyQGHntE1YwSsXjjvRtfJJRSvyUNn43YWT1_FHkU)](https://www.deepcode.ai/app/gh/Hawxy/Auth0Net.DependencyInjection/_/dashboard?utm_content=gh%2FHawxy%2FAuth0Net.DependencyInjection)
 
 <h1 align="center">
-<img align="center" src="src/Auth0Net.DependencyInjection/Images/icon.png" height="130px" />
-</h1>
-
-<h1 align="center">
 <img align="center" src="https://user-images.githubusercontent.com/975824/128343470-8d97e39d-ff8a-4daf-8ebf-f9039a46abd6.png" height="130px" />
 </h1>
 
