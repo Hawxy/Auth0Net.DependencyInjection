@@ -1,10 +1,9 @@
 # Auth0.NET Dependency Injection Extensions
 ![.NET Core Build & Test](https://github.com/Hawxy/Auth0Net.DependencyInjection/workflows/.NET%20Core%20Build%20&%20Test/badge.svg)
 [![NuGet](https://img.shields.io/nuget/v/Auth0Net.DependencyInjection.svg?style=flat-square)](https://www.nuget.org/packages/Auth0Net.DependencyInjection)
-[![deepcode](https://www.deepcode.ai/api/gh/badge?key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwbGF0Zm9ybTEiOiJnaCIsIm93bmVyMSI6Ikhhd3h5IiwicmVwbzEiOiJBdXRoME5ldC5EZXBlbmRlbmN5SW5qZWN0aW9uIiwiaW5jbHVkZUxpbnQiOmZhbHNlLCJhdXRob3JJZCI6MjczMDcsImlhdCI6MTYxNjczOTcyNH0.4StSyQGHntE1YwSsXjjvRtfJJRSvyUNn43YWT1_FHkU)](https://www.deepcode.ai/app/gh/Hawxy/Auth0Net.DependencyInjection/_/dashboard?utm_content=gh%2FHawxy%2FAuth0Net.DependencyInjection)
 
 <h1 align="center">
-<img align="center" src="src/Auth0Net.DependencyInjection/Images/icon.png" height="130px" />
+<img align="center" src="https://user-images.githubusercontent.com/975824/128343470-8d97e39d-ff8a-4daf-8ebf-f9039a46abd6.png" height="130px" />
 </h1>
 
 Integrating [Auth0.NET](https://github.com/auth0/auth0.net) into your project whilst attempting to follow idiomatic .NET Core conventions can be cumbersome and involve a sizable amount of boilerplate shared between projects. 
@@ -33,7 +32,7 @@ Install-Package Auth0Net.DependencyInjection
  
  ### Authentication Client Only
  
-![Auth0 Authentication](docs/images/Auth0Authentication.png?raw=true)
+![Auth0Authentication](https://user-images.githubusercontent.com/975824/128319560-4b859296-44f5-4219-a1b3-8255bf29f1b3.png)
  
 If you're simply using the `AuthenticationApiClient` and nothing else, you can call `AddAuth0AuthenticationClientCore` and pass in your Auth0 Domain. This integration is lightweight and does not support any other features of this library. 
  
@@ -57,7 +56,8 @@ public class AuthController : ControllerBase
 
 ### Authentication Client + Management Client 
  
-![Auth0 Authentication & Management](docs/images/Auth0Authentication+Management.png?raw=true)
+![Auth0AuthenticationAndManagement](https://user-images.githubusercontent.com/975824/128319611-9083d473-191d-4593-ad0f-9669335dbb62.png)
+
  
 Add the `AuthenticationApiClient` with `AddAuth0AuthenticationClient`, and provide a [machine-to-machine application](https://auth0.com/docs/applications/set-up-an-application/register-machine-to-machine-applications) configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations. This extension **must** be called before using any other extensions within this library:
  
@@ -94,7 +94,7 @@ public class MyAuth0Service : IAuth0Service
 
 ### With HttpClient and/or Grpc Services
 
-![Auth0 All](docs/images/Auth0All.png?raw=true)
+![Auth0AuthenticationAll](https://user-images.githubusercontent.com/975824/128319653-418e0e72-2ddf-4d02-9544-1d60bd523321.png)
 
 **Note:** This feature relies on `services.AddAuth0AuthenticationClient(config => ...)` being called and configured as outlined in the previous scenario. 
 

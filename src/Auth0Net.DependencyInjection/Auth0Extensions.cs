@@ -31,8 +31,9 @@ namespace Microsoft.Extensions.DependencyInjection
             if (services.Any(x => x.ServiceType == typeof(IAuthenticationApiClient)))
                 throw new InvalidOperationException("AuthenticationApiClient has already been registered!");
 
-            services.AddOptions<Auth0Configuration>().Validate(x => !string.IsNullOrWhiteSpace(x.Domain), "Auth0 Domain cannot be null or empty");
-            services.Configure<Auth0Configuration>(x=> x.Domain = domain);
+            services.AddOptions<Auth0Configuration>()
+                .Configure(x => x.Domain = domain)
+                .Validate(x => !string.IsNullOrWhiteSpace(x.Domain), "Auth0 Domain cannot be null or empty");
 
             services.AddScoped<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
             return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>();
@@ -53,10 +54,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new InvalidOperationException("AuthenticationApiClient has already been registered!");
 
             services.AddOptions<Auth0Configuration>()
+                .Configure(config)
                 .Validate(x => !string.IsNullOrWhiteSpace(x.ClientId) && !string.IsNullOrWhiteSpace(x.Domain) && !string.IsNullOrWhiteSpace(x.ClientSecret),
                     "Auth0 Configuration cannot have empty values");
             
-            services.Configure(config);
             services.AddLazyCache();
 
             services.AddScoped<IAuth0TokenCache, Auth0TokenCache>();
