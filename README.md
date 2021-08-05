@@ -33,7 +33,7 @@ Install-Package Auth0Net.DependencyInjection
  
  ### Authentication Client Only
  
-![Auth0 Authentication](docs/images/Auth0Authentication.png?raw=true)
+![Auth0Authentication](https://user-images.githubusercontent.com/975824/128319560-4b859296-44f5-4219-a1b3-8255bf29f1b3.png)
  
 If you're simply using the `AuthenticationApiClient` and nothing else, you can call `AddAuth0AuthenticationClientCore` and pass in your Auth0 Domain. This integration is lightweight and does not support any other features of this library. 
  
@@ -57,7 +57,8 @@ public class AuthController : ControllerBase
 
 ### Authentication Client + Management Client 
  
-![Auth0 Authentication & Management](docs/images/Auth0Authentication+Management.png?raw=true)
+![Auth0AuthenticationAndManagement](https://user-images.githubusercontent.com/975824/128319611-9083d473-191d-4593-ad0f-9669335dbb62.png)
+
  
 Add the `AuthenticationApiClient` with `AddAuth0AuthenticationClient`, and provide a [machine-to-machine application](https://auth0.com/docs/applications/set-up-an-application/register-machine-to-machine-applications) configuration that will be consumed by the Management Client, Token Cache and IHttpClientBuilder integrations. This extension **must** be called before using any other extensions within this library:
  
@@ -94,7 +95,7 @@ public class MyAuth0Service : IAuth0Service
 
 ### With HttpClient and/or Grpc Services
 
-![Auth0 All](docs/images/Auth0All.png?raw=true)
+![Auth0AuthenticationAll](https://user-images.githubusercontent.com/975824/128319653-418e0e72-2ddf-4d02-9544-1d60bd523321.png)
 
 **Note:** This feature relies on `services.AddAuth0AuthenticationClient(config => ...)` being called and configured as outlined in the previous scenario. 
 
