@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
@@ -29,7 +30,7 @@ namespace Auth0Net.DependencyInjection.Tests
 
             var accessTokenFirst = Guid.NewGuid().ToString();
 
-            A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored)).Returns(
+            A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored)).Returns(
                 new AccessTokenResponse
                 {
                     AccessToken = accessTokenFirst,
@@ -46,7 +47,7 @@ namespace Auth0Net.DependencyInjection.Tests
 
             var accessTokenSecond = Guid.NewGuid().ToString();
 
-            A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored)).Returns(
+            A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored)).Returns(
                 new AccessTokenResponse
                 {
                     AccessToken = accessTokenSecond,
@@ -56,7 +57,7 @@ namespace Auth0Net.DependencyInjection.Tests
             var resSecond = await cache.GetTokenAsync(key);
             Assert.Equal(accessTokenSecond, resSecond);
 
-            A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored))
+            A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored))
                 .MustHaveHappenedTwiceExactly();
 
 
