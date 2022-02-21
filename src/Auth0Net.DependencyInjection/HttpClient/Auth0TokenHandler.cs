@@ -40,8 +40,8 @@ namespace Auth0Net.DependencyInjection.HttpClient
 
     internal class Auth0ManagementTokenHandler : Auth0TokenHandler
     {
-        public Auth0ManagementTokenHandler(IAuth0TokenCache cache, IOptionsSnapshot<Auth0Configuration> options) 
-            : base(cache, new Auth0TokenHandlerConfig(UriHelpers.GetValidManagementUri(options.Value.Domain).ToString()))
+        public Auth0ManagementTokenHandler(IAuth0TokenCache cache, IOptionsSnapshot<Auth0Configuration> options, IOptionsSnapshot<Auth0ManagementClientConfiguration> clientConfig) 
+            : base(cache, new Auth0TokenHandlerConfig(UriHelpers.GetValidManagementUri(clientConfig.Value.AudienceDomainOverride ?? options.Value.Domain).ToString()))
         {
         }
     }

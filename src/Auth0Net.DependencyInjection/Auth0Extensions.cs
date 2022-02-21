@@ -65,6 +65,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddScoped<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
             return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>();
         }
+
         /// <summary>
         /// Adds a <see cref="ManagementApiClient" /> integrated with <see cref="IHttpClientBuilder" /> to the <see cref="IServiceCollection" />.
         /// </summary>
@@ -72,9 +73,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// The domain used to construct the Management connection is the same as set in <see cref="AddAuth0AuthenticationClient"/>.
         /// </remarks>
         /// <param name="services">The <see cref="IServiceCollection" />.</param>
+        /// <param name="config">Additional configuration for the management client/</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientManagementConnection"/>.</returns>
-        public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services)
+        public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services, Action<Auth0ManagementClientConfiguration>? config = null)
         {
+            services.AddOptions<Auth0ManagementClientConfiguration>().Configure(config);
             services.AddScoped<InjectableManagementApiClient>();
             services.AddScoped<ManagementApiClient>(resolver => resolver.GetRequiredService<InjectableManagementApiClient>());
 

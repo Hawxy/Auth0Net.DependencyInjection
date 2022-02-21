@@ -1,7 +1,10 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using Auth0.AuthenticationApi;
+using Auth0.ManagementApi;
 using Auth0Net.DependencyInjection.Cache;
+using Auth0Net.DependencyInjection.HttpClient;
 using Auth0Net.DependencyInjection.Injectables;
 using LazyCache;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,12 +43,12 @@ namespace Auth0Net.DependencyInjection.Tests
 
             var services = new ServiceCollection().AddAuth0AuthenticationClientCore(domain).Services;
 
-            var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(IAuthenticationApiClient) 
+            var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(IAuthenticationApiClient)
                                                                  && x.ImplementationType == typeof(InjectableAuthenticationApiClient));
 
             Assert.NotNull(serviceDescriptor);
             Assert.Equal(ServiceLifetime.Scoped, ServiceLifetime.Scoped);
-            
+
             var provider = services.BuildServiceProvider();
 
             var authenticationClient = provider.GetService<IAuthenticationApiClient>();
@@ -83,7 +86,7 @@ namespace Auth0Net.DependencyInjection.Tests
                 x.ClientSecret = "";
             }).Services.BuildServiceProvider();
 
-            Assert.Throws<OptionsValidationException>(() =>  services.GetRequiredService<IAuthenticationApiClient>());
+            Assert.Throws<OptionsValidationException>(() => services.GetRequiredService<IAuthenticationApiClient>());
         }
 
         [Fact]
@@ -135,6 +138,46 @@ namespace Auth0Net.DependencyInjection.Tests
         {
             Assert.Throws<ArgumentException>(() =>
                 new ServiceCollection().AddHttpClient<DummyClass>(x => { }).AddAccessToken(x => { }));
+        }
+
+        [Fact]
+        public void AddManagementClient_Uses_CustomAudienceDomain()
+        {
+            var customDomain = "custom-domain.com";
+            var clientId = "fake-id";
+            var clientSecret = "fake-secret";
+            var renewal = TimeSpan.FromMinutes(60);
+
+            var collection = new ServiceCollection();
+
+            collection.AddAuth0AuthenticationClient(x =>
+            {
+                x.Domain = customDomain;
+                x.ClientId = clientId;
+                x.ClientSecret = clientSecret;
+                x.TokenExpiryBuffer = renewal;
+            });
+
+            var defaultDomain = "tenant.au.auth0.com";
+
+            collection.AddAuth0ManagementClient(c =>
+            {
+                c.AudienceDomainOverride = defaultDomain;
+            });
+
+            collection.AddHttpClient<DummyClass>().AddManagementAccessToken();
+
+            var services = collection.BuildServiceProvider();
+
+            var handler = services.GetService<Auth0ManagementTokenHandler>();
+
+            Assert.NotNull(handler);
+
+            
+            var config = (Auth0TokenHandlerConfig)typeof(Auth0TokenHandler).GetField("_handlerConfig", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(handler);
+
+            var computedDomain = $"https://{defaultDomain}/api/v2/";
+            Assert.Equal(computedDomain, config!.Audience);
         }
 
     }

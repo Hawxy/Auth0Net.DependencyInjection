@@ -18,7 +18,7 @@ This library hopes to solve that problem, featuring:
  
  :white_check_mark: `IHttpClientBuilder` extensions, providing handlers to automatically append access tokens to outgoing requests.
  
- This library supports .NET Core 3.1 & .NET 5, and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
+ This library supports .NET Core 3.1, .NET 5 & .NET 6, and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
  
  ## Install
  
