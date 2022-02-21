@@ -29,7 +29,7 @@ namespace Auth0Net.DependencyInjection.Cache
     /// <summary>
     /// Configuration for the Auth0 Management API.
     /// </summary>
-    public class Auth0ManagementClientConfiguration
+    public class Auth0ManagementTokenConfiguration
     {
         /// <summary>
         /// This option will replace the use of <see cref="Auth0Configuration.Domain"/> to compute the audience for the Management API token.

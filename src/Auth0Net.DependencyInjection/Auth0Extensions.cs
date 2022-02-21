@@ -7,6 +7,7 @@ using Auth0Net.DependencyInjection.Cache;
 using Auth0Net.DependencyInjection.HttpClient;
 using Auth0Net.DependencyInjection.Injectables;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
@@ -109,10 +110,16 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure.</param>
         /// <param name="config">Additional configuration for the management client.</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClient"/>.</returns>
-        public static IHttpClientBuilder AddManagementAccessToken(this IHttpClientBuilder builder, Action<Auth0ManagementClientConfiguration>? config = null)
+        public static IHttpClientBuilder AddManagementAccessToken(this IHttpClientBuilder builder, Action<Auth0ManagementTokenConfiguration>? config = null)
         {
-            builder.Services.AddOptions<Auth0ManagementClientConfiguration>().Configure(config);
-            builder.Services.TryAddTransient<Auth0ManagementTokenHandler>();
+            var c = new Auth0ManagementTokenConfiguration();
+            config?.Invoke(c);
+          
+            builder.Services.TryAddTransient(p => 
+                new Auth0ManagementTokenHandler(
+                p.GetRequiredService<IAuth0TokenCache>(),
+                p.GetRequiredService<IOptionsSnapshot<Auth0Configuration>>(), c));
+
             return builder.AddHttpMessageHandler<Auth0ManagementTokenHandler>();
         }
     }
