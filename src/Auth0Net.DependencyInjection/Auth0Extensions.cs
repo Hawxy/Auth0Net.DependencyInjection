@@ -73,7 +73,6 @@ namespace Microsoft.Extensions.DependencyInjection
         /// The domain used to construct the Management connection is the same as set in <see cref="AddAuth0AuthenticationClient"/>.
         /// </remarks>
         /// <param name="services">The <see cref="IServiceCollection" />.</param>
-        /// <param name="config">Additional configuration for the management client/</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientManagementConnection"/>.</returns>
         public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services)
         {
@@ -108,6 +107,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// The domain used to resolve the token is the same as set in <see cref="AddAuth0AuthenticationClient"/>.
         /// </remarks>
         /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure.</param>
+        /// <param name="config">Additional configuration for the management client.</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClient"/>.</returns>
         public static IHttpClientBuilder AddManagementAccessToken(this IHttpClientBuilder builder, Action<Auth0ManagementClientConfiguration>? config = null)
         {
