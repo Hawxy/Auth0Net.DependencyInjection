@@ -160,10 +160,11 @@ namespace Auth0Net.DependencyInjection.Tests
 
             var defaultDomain = "tenant.au.auth0.com";
 
-            collection.AddAuth0ManagementClient(c =>
-            {
-                c.AudienceDomainOverride = defaultDomain;
-            });
+            collection.AddAuth0ManagementClient()
+                .AddManagementAccessToken(c =>
+                {
+                    c.AudienceDomainOverride = defaultDomain;
+                });
 
             collection.AddHttpClient<DummyClass>().AddManagementAccessToken();
 

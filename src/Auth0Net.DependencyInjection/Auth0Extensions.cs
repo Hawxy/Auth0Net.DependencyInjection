@@ -75,9 +75,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="services">The <see cref="IServiceCollection" />.</param>
         /// <param name="config">Additional configuration for the management client/</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientManagementConnection"/>.</returns>
-        public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services, Action<Auth0ManagementClientConfiguration>? config = null)
+        public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services)
         {
-            services.AddOptions<Auth0ManagementClientConfiguration>().Configure(config);
             services.AddScoped<InjectableManagementApiClient>();
             services.AddScoped<ManagementApiClient>(resolver => resolver.GetRequiredService<InjectableManagementApiClient>());
 
@@ -110,8 +109,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </remarks>
         /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure.</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClient"/>.</returns>
-        public static IHttpClientBuilder AddManagementAccessToken(this IHttpClientBuilder builder)
+        public static IHttpClientBuilder AddManagementAccessToken(this IHttpClientBuilder builder, Action<Auth0ManagementClientConfiguration>? config = null)
         {
+            builder.Services.AddOptions<Auth0ManagementClientConfiguration>().Configure(config);
             builder.Services.TryAddTransient<Auth0ManagementTokenHandler>();
             return builder.AddHttpMessageHandler<Auth0ManagementTokenHandler>();
         }
