@@ -18,7 +18,7 @@ This library hopes to solve that problem, featuring:
  
  :white_check_mark: `IHttpClientBuilder` extensions, providing handlers to automatically append access tokens to outgoing requests.
  
- This library supports .NET Core 3.1 & .NET 5, and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
+ This library supports .NET Core 3.1, .NET 5 & .NET 6, and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
  
  ## Install
  
@@ -91,6 +91,19 @@ public class MyAuth0Service : IAuth0Service
         _managementApiClient = managementApiClient;
     }
  ```
+ 
+ 
+ #### Handling Custom Domains
+
+If you're using a custom domain with your Auth0 tenant, you may run into a problem whereby the `audience` of the Management API is being incorrectly set. You can override this via the following:
+
+```cs
+services.AddAuth0ManagementClient()
+    .AddManagementAccessToken(c =>
+    {
+        c.AudienceDomainOverride = "my-tenant.au.auth0.com";
+    });
+```
 
 ### With HttpClient and/or Grpc Services
 
@@ -126,6 +139,8 @@ services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MySer
         .AddServiceDiscovery()
         .AddAccessToken(config => config.AudienceResolver = request => request.RequestUri.GetLeftPart(UriPartial.Authority));
 ```
+
+
 
 ### Samples
 

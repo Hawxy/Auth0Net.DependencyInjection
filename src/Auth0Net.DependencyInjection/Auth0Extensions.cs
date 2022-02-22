@@ -7,6 +7,7 @@ using Auth0Net.DependencyInjection.Cache;
 using Auth0Net.DependencyInjection.HttpClient;
 using Auth0Net.DependencyInjection.Injectables;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
@@ -65,6 +66,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddScoped<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
             return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>();
         }
+
         /// <summary>
         /// Adds a <see cref="ManagementApiClient" /> integrated with <see cref="IHttpClientBuilder" /> to the <see cref="IServiceCollection" />.
         /// </summary>
@@ -106,11 +108,17 @@ namespace Microsoft.Extensions.DependencyInjection
         /// The domain used to resolve the token is the same as set in <see cref="AddAuth0AuthenticationClient"/>.
         /// </remarks>
         /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure.</param>
+        /// <param name="config">Additional configuration for the management client.</param>
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClient"/>.</returns>
-        public static IHttpClientBuilder AddManagementAccessToken(this IHttpClientBuilder builder)
+        public static IHttpClientBuilder AddManagementAccessToken(this IHttpClientBuilder builder, Action<Auth0ManagementTokenConfiguration>? config = null)
         {
-            builder.Services.TryAddTransient<Auth0ManagementTokenHandler>();
-            return builder.AddHttpMessageHandler<Auth0ManagementTokenHandler>();
+            var c = new Auth0ManagementTokenConfiguration();
+            config?.Invoke(c);
+
+            return builder.AddHttpMessageHandler(p =>
+                new Auth0ManagementTokenHandler(
+                    p.GetRequiredService<IAuth0TokenCache>(),
+                    p.GetRequiredService<IOptionsSnapshot<Auth0Configuration>>(), c));
         }
     }
 
