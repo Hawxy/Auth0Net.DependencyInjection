@@ -114,13 +114,11 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             var c = new Auth0ManagementTokenConfiguration();
             config?.Invoke(c);
-          
-            builder.Services.TryAddTransient(p => 
-                new Auth0ManagementTokenHandler(
-                p.GetRequiredService<IAuth0TokenCache>(),
-                p.GetRequiredService<IOptionsSnapshot<Auth0Configuration>>(), c));
 
-            return builder.AddHttpMessageHandler<Auth0ManagementTokenHandler>();
+            return builder.AddHttpMessageHandler(p =>
+                new Auth0ManagementTokenHandler(
+                    p.GetRequiredService<IAuth0TokenCache>(),
+                    p.GetRequiredService<IOptionsSnapshot<Auth0Configuration>>(), c));
         }
     }
 

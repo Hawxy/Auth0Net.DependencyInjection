@@ -141,7 +141,7 @@ namespace Auth0Net.DependencyInjection.Tests
         }
 
         [Fact]
-        public void AddManagementClient_Uses_CustomAudienceDomain()
+        public void AddManagementClient_Can_BeResolved()
         {
             var customDomain = "custom-domain.com";
             var clientId = "fake-id";
@@ -170,15 +170,9 @@ namespace Auth0Net.DependencyInjection.Tests
 
             var services = collection.BuildServiceProvider();
 
-            var handler = services.GetService<Auth0ManagementTokenHandler>();
-
-            Assert.NotNull(handler);
-
+            var client = services.GetService<ManagementApiClient>();
             
-            var config = (Auth0TokenHandlerConfig)typeof(Auth0TokenHandler).GetField("_handlerConfig", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(handler);
-
-            var computedDomain = $"https://{defaultDomain}/api/v2/";
-            Assert.Equal(computedDomain, config!.Audience);
+            Assert.NotNull(client);
         }
 
     }
