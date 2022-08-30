@@ -4,7 +4,7 @@
     <TargetFrameworks>netstandard2.1;net5.0;net6.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
-    <Version>1.6.0</Version>
+    <Version>1.7.0</Version>
     <Authors>Hawxy</Authors>
     <Description>Dependency Injection, HttpClientFactory &amp; ASP.NET Core extensions for Auth0.NET</Description>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -18,8 +18,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Auth0.AuthenticationApi" Version="7.14.0" />
-    <PackageReference Include="Auth0.ManagementApi" Version="7.14.0" />
+    <PackageReference Include="Auth0.AuthenticationApi" Version="7.17.0" />
+    <PackageReference Include="Auth0.ManagementApi" Version="7.17.0" />
     <PackageReference Include="LazyCache.AspNetCore" Version="2.4.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
