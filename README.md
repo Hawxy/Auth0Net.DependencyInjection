@@ -87,7 +87,7 @@ public class MyAuth0Service : IAuth0Service
 {
     private readonly IManagementApiClient _managementApiClient;
 
-    public AuthController(IManagementApiClient managementApiClient)
+    public MyAuth0Service(IManagementApiClient managementApiClient)
     {
         _managementApiClient = managementApiClient;
     }
