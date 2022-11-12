@@ -170,7 +170,7 @@ namespace Auth0Net.DependencyInjection.Tests
 
             var services = collection.BuildServiceProvider();
 
-            var client = services.GetService<ManagementApiClient>();
+            var client = services.GetService<IManagementApiClient>();
             
             Assert.NotNull(client);
         }

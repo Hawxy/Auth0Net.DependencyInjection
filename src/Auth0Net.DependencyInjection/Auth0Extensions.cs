@@ -6,7 +6,6 @@ using Auth0.ManagementApi;
 using Auth0Net.DependencyInjection.Cache;
 using Auth0Net.DependencyInjection.HttpClient;
 using Auth0Net.DependencyInjection.Injectables;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 // ReSharper disable once CheckNamespace
@@ -77,8 +76,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientManagementConnection"/>.</returns>
         public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services)
         {
-            services.AddScoped<InjectableManagementApiClient>();
-            services.AddScoped<ManagementApiClient>(resolver => resolver.GetRequiredService<InjectableManagementApiClient>());
+            services.AddScoped<IManagementApiClient, InjectableManagementApiClient>();
 
             return services.AddHttpClient<IManagementConnection, HttpClientManagementConnection>();
         }

@@ -11,9 +11,9 @@ namespace Sample.AspNetCore.Controllers
     [Route("[controller]")]
     public class UsersController : ControllerBase
     {
-        private readonly ManagementApiClient _managementApiClient;
+        private readonly IManagementApiClient _managementApiClient;
 
-        public UsersController(ManagementApiClient managementApiClient)
+        public UsersController(IManagementApiClient managementApiClient)
         {
             _managementApiClient = managementApiClient;
         }

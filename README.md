@@ -18,7 +18,7 @@ This library hopes to solve that problem, featuring:
  
  :white_check_mark: `IHttpClientBuilder` extensions, providing handlers to automatically append access tokens to outgoing requests.
  
- This library supports .NET Core 3.1, .NET 5 & .NET 6, and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
+ This library supports .NET 6 & .NET 7, and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
  
  ## Install
  
@@ -78,15 +78,15 @@ services.AddAuth0ManagementClient().AddManagementAccessToken();
 
 Ensure your Machine-to-Machine application is authorized to request tokens from the Managment API and it has the correct scopes for the features you wish to use.
 
-You can then request the `ManagementApiClient` (or `IAuthenticationApiClient`) within your services:
+You can then request the `IManagementApiClient` (or `IAuthenticationApiClient`) within your services:
 
 ```csharp
 
 public class MyAuth0Service : IAuth0Service
 {
-    private readonly ManagementApiClient _managementApiClient;
+    private readonly IManagementApiClient _managementApiClient;
 
-    public AuthController(ManagementApiClient managementApiClient)
+    public AuthController(IManagementApiClient managementApiClient)
     {
         _managementApiClient = managementApiClient;
     }
