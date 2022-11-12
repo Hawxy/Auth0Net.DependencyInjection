@@ -1,6 +1,7 @@
 # Auth0.NET Dependency Injection Extensions
-![.NET Core Build & Test](https://github.com/Hawxy/Auth0Net.DependencyInjection/workflows/.NET%20Core%20Build%20&%20Test/badge.svg)
+![BuildTest](https://github.com/Hawxy/Auth0Net.DependencyInjection/workflows/.NET%20Core%20Build%20&%20Test/badge.svg)
 [![NuGet](https://img.shields.io/nuget/v/Auth0Net.DependencyInjection.svg?style=flat-square)](https://www.nuget.org/packages/Auth0Net.DependencyInjection)
+[![Nuget](https://img.shields.io/nuget/dt/Auth0Net.DependencyInjection?style=flat-square)](https://www.nuget.org/packages/Auth0Net.DependencyInjection)
 
 <h1 align="center">
 <img align="center" src="https://user-images.githubusercontent.com/975824/128343470-8d97e39d-ff8a-4daf-8ebf-f9039a46abd6.png" height="130px" />
