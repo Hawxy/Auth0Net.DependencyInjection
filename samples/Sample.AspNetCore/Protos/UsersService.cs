@@ -10,8 +10,8 @@ namespace Sample.AspNetCore.Protos
 {
     public class UsersService : UserService.UserServiceBase
     {
-        private readonly ManagementApiClient _client;
-        public UsersService(ManagementApiClient client)
+        private readonly IManagementApiClient _client;
+        public UsersService(IManagementApiClient client)
         {
             _client = client;
         }
