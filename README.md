@@ -106,13 +106,13 @@ services.AddAuth0ManagementClient()
     });
 ```
 
-### With HttpClient and/or Grpc Services
+### With HttpClient and/or Grpc Services (Machine-To-Machine tokens)
 
 ![Auth0AuthenticationAll](https://user-images.githubusercontent.com/975824/128319653-418e0e72-2ddf-4d02-9544-1d60bd523321.png)
 
 **Note:** This feature relies on `services.AddAuth0AuthenticationClient(config => ...)` being called and configured as outlined in the previous scenario. 
 
-This library includes a delegating handler - effectively middleware for your HttpClient - that will append an access token to all outbound requests. This integration requires your service implementation to use `IHttpClientFactory` as part of its registration. You can read more about it [here](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests)
+This library includes a delegating handler - effectively middleware for your HttpClient - that will append an access token to all outbound requests. This is useful for calling other services that are protected by Auth0. This integration requires your service implementation to use `IHttpClientFactory` as part of its registration. You can read more about it [here](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests)
 
 #### HttpClient
 Use `AddAccessToken` along with the required audience:
