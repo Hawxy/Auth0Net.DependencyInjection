@@ -36,7 +36,7 @@ public class Auth0TokenHandler : DelegatingHandler
 
 internal sealed class Auth0ManagementTokenHandler : Auth0TokenHandler
 {
-    public Auth0ManagementTokenHandler(IAuth0TokenCache cache, IOptionsSnapshot<Auth0Configuration> options, Auth0ManagementTokenConfiguration clientConfig) 
+    public Auth0ManagementTokenHandler(IAuth0TokenCache cache, IOptions<Auth0Configuration> options, Auth0ManagementTokenConfiguration clientConfig) 
         : base(cache, new Auth0TokenHandlerConfig(UriHelpers.GetValidManagementUri(clientConfig.Audience ?? options.Value.Domain).ToString()))
     {
     }

@@ -141,7 +141,9 @@ services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MySer
         .AddAccessToken(config => config.AudienceResolver = request => request.RequestUri.GetLeftPart(UriPartial.Authority));
 ```
 
+### Client Lifetimes
 
+Both the authentication and authorization clients are registered as singletons and are suitable for injection into any other lifetime.
 
 ### Samples
 
@@ -149,7 +151,9 @@ Both a .NET Generic Host and ASP.NET Core example are available in the [samples]
 
 ### Internal Cache
 
-The `Auth0TokenCache` will cache a token for a given audience until 30 minutes before expiry. You can increase or decrease this by setting the `TokenExpiryBuffer` on the `Auth0Configuration`.
+The `Auth0TokenCache` will cache a token for a given audience until at least 95% of the expiry time. If a request to the cache is made between 95% and 99% of expiry, the token will be refreshed in the background before expiry is reached.
+
+An additional 1% of lifetime is removed to protect against clock drift between distributed systems.
 
 In some situations you might want to request an access token from Auth0 manually. You can achieve this by injecting `IAuth0TokenCache` into a class and calling `GetTokenAsync` with the audience of the API you're requesting the token for.
 

@@ -33,7 +33,13 @@ public static class Auth0Extensions
             .Validate(x => !string.IsNullOrWhiteSpace(x.Domain), "Auth0 Domain cannot be null or empty");
 
         services.AddSingleton<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
-        return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>();
+        return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>()
+            .ConfigurePrimaryHttpMessageHandler(() =>
+                new SocketsHttpHandler()
+                {
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+                })
+            .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
     }
 
     /// <summary>
@@ -125,6 +131,6 @@ public static class Auth0Extensions
         return builder.AddHttpMessageHandler(p =>
             new Auth0ManagementTokenHandler(
                 p.GetRequiredService<IAuth0TokenCache>(),
-                p.GetRequiredService<IOptionsSnapshot<Auth0Configuration>>(), c));
+                p.GetRequiredService<IOptions<Auth0Configuration>>(), c));
     }
 }

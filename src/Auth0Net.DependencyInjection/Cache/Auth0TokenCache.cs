@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
 using Auth0Net.DependencyInjection.HttpClient;
@@ -15,6 +16,8 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
     private readonly ILogger<Auth0TokenCache> _logger;
     private readonly Auth0Configuration _config;
 
+    private const double TokenExpiryBuffer = 0.01d;
+    
     private static string Key(string audience) => $"{nameof(Auth0TokenCache)}-{audience}";
 
     /// <summary>
@@ -46,11 +49,14 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
 
             var response = await _client.GetTokenAsync(tokenRequest, ct);
 
-            var expiry = TimeSpan.FromSeconds(response.ExpiresIn);
+            var computedExpiry = Math.Ceiling(response.ExpiresIn - response.ExpiresIn * TokenExpiryBuffer);
+            Debug.Assert(computedExpiry > 0);
+            
+            var expiry = TimeSpan.FromSeconds(computedExpiry);
             _logger.ExpiresAt(audience, expiry);
 
             config.Options.SetDuration(expiry);
-            config.Options.SetEagerRefresh(0.9f);
+            config.Options.SetEagerRefresh(0.95f);
 
             return response.AccessToken;
         }, token: token))!;
