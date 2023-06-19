@@ -8,80 +8,79 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Sample.AspNetCore.Protos;
 
-namespace Sample.AspNetCore
+namespace Sample.AspNetCore;
+
+public class Startup
 {
-    public class Startup
+    public Startup(IConfiguration configuration)
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+        Configuration = configuration;
+    }
 
-        public IConfiguration Configuration { get; }
+    public IConfiguration Configuration { get; }
 
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllers();
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllers();
 
-            // An extension method is included to convert a naked auth0 domain (my-tenant.auth0.au.com) to the correct format (https://my-tenant-auth0.au.com/)
-            string domain = Configuration["Auth0:Domain"].ToHttpsUrl();
+        // An extension method is included to convert a naked auth0 domain (my-tenant.auth0.au.com) to the correct format (https://my-tenant-auth0.au.com/)
+        string domain = Configuration["Auth0:Domain"].ToHttpsUrl();
 
-            // Equivalent to 
-            // string domain = $"https://{Configuration["Auth0:Domain"]}/";
+        // Equivalent to 
+        // string domain = $"https://{Configuration["Auth0:Domain"]}/";
 
-            // Protect your API with authentication as you normally would
-            services
-                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.Authority = domain;
-                    options.Audience = Configuration["Auth0:Audience"];
-                });
-
-            // We'll require all endpoints to be authorized by default
-            services.AddAuthorization(options =>
+        // Protect your API with authentication as you normally would
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
             {
-                options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser()
-                    .Build();
+                options.Authority = domain;
+                options.Audience = Configuration["Auth0:Audience"];
             });
 
-           // If you're just using the authentication client and nothing else, you can use this lightweight version instead.
-           // services.AddAuth0AuthenticationClientCore(domain);
-
-           // Adds the AuthenticationApiClient client and provides configuration to be consumed by the management client, token cache, and IHttpClientBuilder integrations
-            services.AddAuth0AuthenticationClient(config =>
-            {
-                config.Domain = domain;
-                config.ClientId = Configuration["Auth0:ClientId"];
-                config.ClientSecret = Configuration["Auth0:ClientSecret"];
-            });
-
-            // Adds the ManagementApiClient with automatic injection of the management token based on the configuration set above.
-            services.AddAuth0ManagementClient().AddManagementAccessToken();
-
-            services.AddGrpc();
-        }
-
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        // We'll require all endpoints to be authorized by default
+        services.AddAuthorization(options =>
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
+            options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+        });
 
-            app.UseHttpsRedirection();
+        // If you're just using the authentication client and nothing else, you can use this lightweight version instead.
+        // services.AddAuth0AuthenticationClientCore(domain);
 
-            app.UseRouting();
+        // Adds the AuthenticationApiClient client and provides configuration to be consumed by the management client, token cache, and IHttpClientBuilder integrations
+        services.AddAuth0AuthenticationClient(config =>
+        {
+            config.Domain = domain;
+            config.ClientId = Configuration["Auth0:ClientId"];
+            config.ClientSecret = Configuration["Auth0:ClientSecret"];
+        });
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+        // Adds the ManagementApiClient with automatic injection of the management token based on the configuration set above.
+        services.AddAuth0ManagementClient().AddManagementAccessToken();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-                endpoints.MapGrpcService<UsersService>();
-            });
+        services.AddGrpc();
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
         }
+
+        app.UseHttpsRedirection();
+
+        app.UseRouting();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+            endpoints.MapGrpcService<UsersService>();
+        });
     }
 }
