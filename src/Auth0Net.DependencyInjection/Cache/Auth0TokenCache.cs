@@ -38,7 +38,7 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
 
         return (await _cache.GetOrSetAsync<string>(Key(audience), async (config, ct) =>
         {
-            _logger.CacheMiss(audience);
+            _logger.CacheFetch(audience);
 
             var tokenRequest = new ClientCredentialsTokenRequest
             {
@@ -53,8 +53,8 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
             Debug.Assert(computedExpiry > 0);
             
             var expiry = TimeSpan.FromSeconds(computedExpiry);
-            _logger.ExpiresAt(audience, expiry);
-
+            _logger.ExpiresAt(audience, computedExpiry);
+            
             config.Options.SetDuration(expiry);
             config.Options.SetEagerRefresh(0.95f);
 
@@ -71,12 +71,12 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
 
 internal static partial class Log
 {
-    [LoggerMessage(Message = "Auth0 Token was requested for audience {audience}", Level = LogLevel.Trace)]
+    [LoggerMessage(Message = "Auth0 Token was requested for audience: {audience}", Level = LogLevel.Debug)]
     public static partial void TokenRequested(this ILogger logger, string audience);
     
-    [LoggerMessage(Message = "Auth0 Token cache missed, fetching new token for audience {audience}", Level = LogLevel.Trace)]
-    public static partial void CacheMiss(this ILogger logger, string audience);
+    [LoggerMessage(Message = "Auth0 Token cache is refreshing, fetching new token for audience: {audience}", Level = LogLevel.Debug)]
+    public static partial void CacheFetch(this ILogger logger, string audience);
     
-    [LoggerMessage(Message = "Auth0 Token for audience {audience} will expire at {expiry}", Level = LogLevel.Trace)]
-    public static partial void ExpiresAt(this ILogger logger, string audience, TimeSpan expiry);
+    [LoggerMessage(Message = "Auth0 Token for audience {audience} will expire in {expiry} seconds", Level = LogLevel.Debug)]
+    public static partial void ExpiresAt(this ILogger logger, string audience, double expiry);
 }
