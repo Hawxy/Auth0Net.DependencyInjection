@@ -3,10 +3,10 @@ using Auth0.ManagementApi;
 using Auth0Net.DependencyInjection.Cache;
 using Auth0Net.DependencyInjection.HttpClient;
 using Auth0Net.DependencyInjection.Injectables;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-// ReSharper disable once CheckNamespace
-namespace Microsoft.Extensions.DependencyInjection;
+namespace Auth0Net.DependencyInjection;
 
 /// <summary>
 /// Extensions for integrating Auth0 .NET with <see cref="IServiceCollection"/> and <see cref="IHttpClientBuilder"/>
@@ -32,7 +32,7 @@ public static class Auth0Extensions
             .Configure(x => x.Domain = domain)
             .Validate(x => !string.IsNullOrWhiteSpace(x.Domain), "Auth0 Domain cannot be null or empty");
 
-        services.AddScoped<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
+        services.AddSingleton<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
         return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>();
     }
 
@@ -57,10 +57,16 @@ public static class Auth0Extensions
 
         services.AddFusionCache(Constants.FusionCacheInstance);
 
-        services.AddScoped<IAuth0TokenCache, Auth0TokenCache>();
+        services.AddSingleton<IAuth0TokenCache, Auth0TokenCache>();
 
-        services.AddScoped<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
-        return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>();
+        services.AddSingleton<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
+        return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>()
+            .ConfigurePrimaryHttpMessageHandler(() => 
+                new SocketsHttpHandler()
+                {
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+                })
+            .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
     }
 
     /// <summary>
@@ -73,9 +79,15 @@ public static class Auth0Extensions
     /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientManagementConnection"/>.</returns>
     public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services)
     {
-        services.AddScoped<IManagementApiClient, InjectableManagementApiClient>();
+        services.AddSingleton<IManagementApiClient, InjectableManagementApiClient>();
 
-        return services.AddHttpClient<IManagementConnection, HttpClientManagementConnection>();
+        return services.AddHttpClient<IManagementConnection, HttpClientManagementConnection>()
+            .ConfigurePrimaryHttpMessageHandler(() => 
+                new SocketsHttpHandler()
+                {
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+                })
+            .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
     }
 
     /// <summary>

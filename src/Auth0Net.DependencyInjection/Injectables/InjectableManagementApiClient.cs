@@ -7,7 +7,7 @@ namespace Auth0Net.DependencyInjection.Injectables;
 
 internal sealed class InjectableManagementApiClient : ManagementApiClient
 {
-    public InjectableManagementApiClient(IOptionsSnapshot<Auth0Configuration> config, IManagementConnection managementConnection)
+    public InjectableManagementApiClient(IOptions<Auth0Configuration> config, IManagementConnection managementConnection)
         : base(null, UriHelpers.GetValidManagementUri(config.Value.Domain), managementConnection)
     {
     }

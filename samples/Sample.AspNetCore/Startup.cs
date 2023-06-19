@@ -1,3 +1,4 @@
+using Auth0Net.DependencyInjection;
 using Auth0Net.DependencyInjection.HttpClient;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;

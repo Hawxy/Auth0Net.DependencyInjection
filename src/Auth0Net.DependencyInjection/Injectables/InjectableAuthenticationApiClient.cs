@@ -7,7 +7,7 @@ namespace Auth0Net.DependencyInjection.Injectables;
 
 internal sealed class InjectableAuthenticationApiClient : AuthenticationApiClient
 {
-    public InjectableAuthenticationApiClient(IOptionsSnapshot<Auth0Configuration> config, IAuthenticationConnection connection) 
+    public InjectableAuthenticationApiClient(IOptions<Auth0Configuration> config, IAuthenticationConnection connection) 
         : base(UriHelpers.GetValidUri(config.Value.Domain), connection)
     {
     }
