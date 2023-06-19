@@ -1,0 +1,4 @@
+{
+  "$schema": "./build.schema.json",
+  "Solution": "Auth0Net.DependencyInjection.sln"
+}
