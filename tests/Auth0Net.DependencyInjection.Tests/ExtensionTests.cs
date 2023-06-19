@@ -4,10 +4,10 @@ using Auth0.AuthenticationApi;
 using Auth0.ManagementApi;
 using Auth0Net.DependencyInjection.Cache;
 using Auth0Net.DependencyInjection.Injectables;
-using LazyCache;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Auth0Net.DependencyInjection.Tests;
 
@@ -93,14 +93,12 @@ public class ExtensionTests
         var domain = "test.au.auth0.com";
         var clientId = "fake-id";
         var clientSecret = "fake-secret";
-        var renewal = TimeSpan.FromMinutes(60);
 
         var services = new ServiceCollection().AddAuth0AuthenticationClient(x =>
         {
             x.Domain = domain;
             x.ClientId = clientId;
             x.ClientSecret = clientSecret;
-            x.TokenExpiryBuffer = renewal;
         }).Services;
 
         var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(IAuthenticationApiClient));
@@ -120,15 +118,14 @@ public class ExtensionTests
         var tokenCache = provider.GetService<IAuth0TokenCache>();
         Assert.NotNull(tokenCache);
 
-        var appCache = provider.GetService<IAppCache>();
-        Assert.NotNull(appCache);
+        var fusionCache = provider.GetService<IFusionCacheProvider>();
+        Assert.NotNull(fusionCache);
 
         var configuration = provider.GetService<IOptions<Auth0Configuration>>();
 
         Assert.Equal(domain, configuration.Value.Domain);
         Assert.Equal(clientId, configuration.Value.ClientId);
         Assert.Equal(clientSecret, configuration.Value.ClientSecret);
-        Assert.Equal(renewal, configuration.Value.TokenExpiryBuffer);
     }
 
     [Fact]
@@ -144,7 +141,6 @@ public class ExtensionTests
         var customDomain = "custom-domain.com";
         var clientId = "fake-id";
         var clientSecret = "fake-secret";
-        var renewal = TimeSpan.FromMinutes(60);
 
         var collection = new ServiceCollection();
 
@@ -153,7 +149,6 @@ public class ExtensionTests
             x.Domain = customDomain;
             x.ClientId = clientId;
             x.ClientSecret = clientSecret;
-            x.TokenExpiryBuffer = renewal;
         });
 
         var defaultDomain = "tenant.au.auth0.com";
@@ -161,7 +156,7 @@ public class ExtensionTests
         collection.AddAuth0ManagementClient()
             .AddManagementAccessToken(c =>
             {
-                c.AudienceDomainOverride = defaultDomain;
+                c.Audience = defaultDomain;
             });
 
         collection.AddHttpClient<DummyClass>().AddManagementAccessToken();

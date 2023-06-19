@@ -29,15 +29,15 @@ public class Auth0TokenHandler : DelegatingHandler
     {
         var audience = _handlerConfig.Audience ?? _handlerConfig.AudienceResolver?.Invoke(request) ?? throw new ArgumentException("Audience cannot be computed");
 
-        request.Headers.Authorization = new AuthenticationHeaderValue(Scheme, await _cache.GetTokenAsync(audience));
+        request.Headers.Authorization = new AuthenticationHeaderValue(Scheme, await _cache.GetTokenAsync(audience, cancellationToken));
         return await base.SendAsync(request, cancellationToken);
     }
 }
 
-internal class Auth0ManagementTokenHandler : Auth0TokenHandler
+internal sealed class Auth0ManagementTokenHandler : Auth0TokenHandler
 {
     public Auth0ManagementTokenHandler(IAuth0TokenCache cache, IOptionsSnapshot<Auth0Configuration> options, Auth0ManagementTokenConfiguration clientConfig) 
-        : base(cache, new Auth0TokenHandlerConfig(UriHelpers.GetValidManagementUri(clientConfig.AudienceDomainOverride ?? options.Value.Domain).ToString()))
+        : base(cache, new Auth0TokenHandlerConfig(UriHelpers.GetValidManagementUri(clientConfig.Audience ?? options.Value.Domain).ToString()))
     {
     }
 }

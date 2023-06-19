@@ -21,7 +21,6 @@
   <ItemGroup>
     <PackageReference Include="Auth0.AuthenticationApi" Version="7.20.0" />
     <PackageReference Include="Auth0.ManagementApi" Version="7.20.0" />
-    <PackageReference Include="LazyCache.AspNetCore" Version="2.4.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
     <PackageReference Include="ZiggyCreatures.FusionCache" Version="0.21.0" />
   </ItemGroup>

@@ -1,43 +1,42 @@
-﻿using Auth0.AuthenticationApi;
+using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
 using Auth0Net.DependencyInjection.HttpClient;
-using LazyCache;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Auth0Net.DependencyInjection.Cache;
 
 /// <inheritdoc cref="IAuth0TokenCache"/>
-public class Auth0TokenCache : IAuth0TokenCache
+public sealed class Auth0TokenCache : IAuth0TokenCache
 {
     private readonly IAuthenticationApiClient _client;
-    private readonly IAppCache _cache;
+    private readonly IFusionCache _cache;
     private readonly ILogger<Auth0TokenCache> _logger;
     private readonly Auth0Configuration _config;
+
+    private static string Key(string audience) => $"{nameof(Auth0TokenCache)}-{audience}";
 
     /// <summary>
     /// An implementation of <see cref="IAuth0TokenCache"/> that caches and renews Auth0 Access Tokens
     /// </summary>
-    /// <param name="client">The Authentication Client</param>
-    /// <param name="cache">An application cache from LazyCache </param>
-    /// <param name="logger"></param>
-    /// <param name="config"></param>
-    public Auth0TokenCache(IAuthenticationApiClient client, IAppCache cache, ILogger<Auth0TokenCache> logger, IOptionsSnapshot<Auth0Configuration> config)
+    public Auth0TokenCache(IAuthenticationApiClient client, IFusionCacheProvider provider, ILogger<Auth0TokenCache> logger, IOptions<Auth0Configuration> config)
     {
         _client = client;
-        _cache = cache;
+        _cache = provider.GetCache(Constants.FusionCacheInstance);
         _logger = logger;
         _config = config.Value;
     }
 
     /// <inheritdoc cref="IAuth0TokenCache"/>
-    public async Task<string> GetTokenAsync(string audience)
+    public async ValueTask<string> GetTokenAsync(string audience, CancellationToken token = default)
     {
-        _logger.LogTrace("Auth0 Token was requested for audience {audience}", audience);
-        return await _cache.GetOrAddAsync($"{nameof(Auth0TokenCache)}-{audience}", async e =>
+        _logger.TokenRequested(audience);
+
+        return (await _cache.GetOrSetAsync<string>(Key(audience), async (config, ct) =>
         {
-            _logger.LogDebug("Auth0 Token cache missed, fetching new token for audience {audience}", audience);
+            _logger.CacheMiss(audience);
+
             var tokenRequest = new ClientCredentialsTokenRequest
             {
                 ClientId = _config.ClientId,
@@ -45,20 +44,33 @@ public class Auth0TokenCache : IAuth0TokenCache
                 Audience = audience
             };
 
-            var response = await _client.GetTokenAsync(tokenRequest);
+            var response = await _client.GetTokenAsync(tokenRequest, ct);
 
-            var expiry = DateTimeOffset.UtcNow.Add(TimeSpan.FromSeconds(response.ExpiresIn).Subtract(_config.TokenExpiryBuffer));
-            _logger.LogTrace("Auth0 Token for audience {audience} will expire at {expiry}", audience, expiry);
+            var expiry = TimeSpan.FromSeconds(response.ExpiresIn);
+            _logger.ExpiresAt(audience, expiry);
 
-            e.SetAbsoluteExpiration(expiry);
+            config.Options.SetDuration(expiry);
+            config.Options.SetEagerRefresh(0.9f);
 
             return response.AccessToken;
-        });
+        }, token: token))!;
     }
 
     /// <inheritdoc cref="IAuth0TokenCache"/>
-    public async Task<string> GetTokenAsync(Uri audience) => await GetTokenAsync(audience.ToString());
+    public ValueTask<string> GetTokenAsync(Uri audience, CancellationToken token = default) => GetTokenAsync(audience.ToString(), token);
 
     /// <inheritdoc cref="IAuth0TokenCache"/>
-    public async Task<string> GetManagementTokenAsync() => await GetTokenAsync(UriHelpers.GetValidManagementUri(_config.Domain));
+    public ValueTask<string> GetManagementTokenAsync(CancellationToken token = default) => GetTokenAsync(UriHelpers.GetValidManagementUri(_config.Domain), token);
+}
+
+internal static partial class Log
+{
+    [LoggerMessage(Message = "Auth0 Token was requested for audience {audience}", Level = LogLevel.Trace)]
+    public static partial void TokenRequested(this ILogger logger, string audience);
+    
+    [LoggerMessage(Message = "Auth0 Token cache missed, fetching new token for audience {audience}", Level = LogLevel.Trace)]
+    public static partial void CacheMiss(this ILogger logger, string audience);
+    
+    [LoggerMessage(Message = "Auth0 Token for audience {audience} will expire at {expiry}", Level = LogLevel.Trace)]
+    public static partial void ExpiresAt(this ILogger logger, string audience, TimeSpan expiry);
 }

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace Auth0Net.DependencyInjection.Injectables;
 
-internal class InjectableAuthenticationApiClient : AuthenticationApiClient
+internal sealed class InjectableAuthenticationApiClient : AuthenticationApiClient
 {
     public InjectableAuthenticationApiClient(IOptionsSnapshot<Auth0Configuration> config, IAuthenticationConnection connection) 
         : base(UriHelpers.GetValidUri(config.Value.Domain), connection)

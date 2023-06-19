@@ -3,7 +3,7 @@
 /// <summary>
 /// Configuration used by the underlying <see cref="Auth0TokenHandler"/>. 
 /// </summary>
-public class Auth0TokenHandlerConfig
+public sealed class Auth0TokenHandlerConfig
 {
     /// <summary>
     /// The resource identifier - aka Audience - you wish to request the token for.

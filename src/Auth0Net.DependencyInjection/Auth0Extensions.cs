@@ -54,8 +54,8 @@ public static class Auth0Extensions
             .Configure(config)
             .Validate(x => !string.IsNullOrWhiteSpace(x.ClientId) && !string.IsNullOrWhiteSpace(x.Domain) && !string.IsNullOrWhiteSpace(x.ClientSecret),
                 "Auth0 Configuration cannot have empty values");
-            
-        services.AddLazyCache();
+
+        services.AddFusionCache(Constants.FusionCacheInstance);
 
         services.AddScoped<IAuth0TokenCache, Auth0TokenCache>();
 
