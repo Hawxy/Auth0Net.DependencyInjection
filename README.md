@@ -96,13 +96,13 @@ public class MyAuth0Service : IAuth0Service
  
  #### Handling Custom Domains
 
-If you're using a custom domain with your Auth0 tenant, you may run into a problem whereby the `audience` of the Management API is being incorrectly set. You can override this via the following:
+If you're using a custom domain with your Auth0 tenant, you may run into a problem whereby the `audience` of the Management API is being incorrectly set. You can override this via the `Audience` property:
 
 ```cs
 services.AddAuth0ManagementClient()
     .AddManagementAccessToken(c =>
     {
-        c.AudienceDomainOverride = "my-tenant.au.auth0.com";
+        c.Audience = "my-tenant.au.auth0.com";
     });
 ```
 
@@ -156,6 +156,8 @@ The `Auth0TokenCache` will cache a token for a given audience until at least 95%
 An additional 1% of lifetime is removed to protect against clock drift between distributed systems.
 
 In some situations you might want to request an access token from Auth0 manually. You can achieve this by injecting `IAuth0TokenCache` into a class and calling `GetTokenAsync` with the audience of the API you're requesting the token for.
+
+An in-memory-only instance of [FusionCache](https://github.com/ZiggyCreatures/FusionCache) is used as the caching implementation. This instance is _named_ and will not impact other usages of FusionCache.
 
 ### Utility 
 
