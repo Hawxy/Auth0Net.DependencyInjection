@@ -21,7 +21,7 @@ public class PumpingBackgroundService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            var userHttpClient = await _usersService.GetUsersAsync();
+            var userHttpClient = await _usersService.GetUsersAsync(stoppingToken);
             _logger.LogInformation("HttpClient got user's email: {email}", userHttpClient?.First().Email);
             await Task.Delay(5000, stoppingToken);
 

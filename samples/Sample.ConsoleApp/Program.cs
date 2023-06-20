@@ -5,6 +5,8 @@ using User;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
+
 // Configure the authentication client and token cache, as we'll need it
 builder.Services.AddAuth0AuthenticationClient(config =>
 {
