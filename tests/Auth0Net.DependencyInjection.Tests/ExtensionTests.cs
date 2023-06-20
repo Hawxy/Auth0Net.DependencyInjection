@@ -1,184 +1,175 @@
 using System;
 using System.Linq;
-using System.Reflection;
 using Auth0.AuthenticationApi;
 using Auth0.ManagementApi;
 using Auth0Net.DependencyInjection.Cache;
-using Auth0Net.DependencyInjection.HttpClient;
 using Auth0Net.DependencyInjection.Injectables;
-using LazyCache;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
+using ZiggyCreatures.Caching.Fusion;
 
-namespace Auth0Net.DependencyInjection.Tests
+namespace Auth0Net.DependencyInjection.Tests;
+
+public class ExtensionTests
 {
-    public class ExtensionTests
+    [Fact]
+    public void AddAuth0AuthenticationClientCore_Throws_OnInvalidDomain()
     {
-        [Fact]
-        public void AddAuth0AuthenticationClientCore_Throws_OnInvalidDomain()
-        {
-            var services = new ServiceCollection().AddAuth0AuthenticationClientCore("").Services.BuildServiceProvider();
+        var services = new ServiceCollection().AddAuth0AuthenticationClientCore("").Services.BuildServiceProvider();
 
-            Assert.Throws<OptionsValidationException>(() => services.GetRequiredService<IAuthenticationApiClient>());
-        }
+        Assert.Throws<OptionsValidationException>(() => services.GetRequiredService<IAuthenticationApiClient>());
+    }
 
-        [Fact]
-        public void AddAuth0AuthenticationClientCore_Throws_AuthenticationClientAlreadyRegistered()
+    [Fact]
+    public void AddAuth0AuthenticationClientCore_Throws_AuthenticationClientAlreadyRegistered()
+    {
+        var services = new ServiceCollection().AddAuth0AuthenticationClient(x =>
         {
-            var services = new ServiceCollection().AddAuth0AuthenticationClient(x =>
+            x.Domain = "";
+            x.ClientId = "";
+            x.ClientSecret = "";
+        }).Services;
+
+        Assert.Throws<InvalidOperationException>(() => services.AddAuth0AuthenticationClientCore("test-url.au.auth0.com"));
+    }
+
+    [Fact]
+    public void AddAuth0AuthenticationClientCore_Resolves_AuthenticationClient()
+    {
+        var domain = "test-url.au.auth0.com";
+
+        var services = new ServiceCollection().AddAuth0AuthenticationClientCore(domain).Services;
+
+        var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(IAuthenticationApiClient)
+                                                             && x.ImplementationType == typeof(InjectableAuthenticationApiClient));
+
+        Assert.NotNull(serviceDescriptor);
+        Assert.Equal(ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+
+        var provider = services.BuildServiceProvider();
+
+        var authenticationClient = provider.GetService<IAuthenticationApiClient>();
+        Assert.NotNull(authenticationClient);
+        Assert.IsType<InjectableAuthenticationApiClient>(authenticationClient);
+
+        var authenticationHttpClient = provider.GetService<IAuthenticationConnection>();
+        Assert.NotNull(authenticationHttpClient);
+
+        var configuration = provider.GetService<IOptions<Auth0Configuration>>();
+        Assert.NotNull(configuration);
+        Assert.Equal(domain, configuration.Value.Domain);
+    }
+
+    [Fact]
+    public void AddAuth0AuthenticationClient_Throws_AuthenticationClientAlreadyRegistered()
+    {
+        var services = new ServiceCollection().AddAuth0AuthenticationClientCore("").Services;
+
+        Assert.Throws<InvalidOperationException>(() => services.AddAuth0AuthenticationClient(x =>
+        {
+            x.Domain = "";
+            x.ClientId = "";
+            x.ClientSecret = "";
+        }));
+    }
+
+    [Fact]
+    public void AddAuth0AuthenticationClient_Throws_InvalidConfiguration()
+    {
+        var services = new ServiceCollection().AddAuth0AuthenticationClient(x =>
+        {
+            x.Domain = "";
+            x.ClientId = "";
+            x.ClientSecret = "";
+        }).Services.BuildServiceProvider();
+
+        Assert.Throws<OptionsValidationException>(() => services.GetRequiredService<IAuthenticationApiClient>());
+    }
+
+    [Fact]
+    public void AddAuth0AuthenticationClient_Resolves_AuthenticationClient()
+    {
+        var domain = "test.au.auth0.com";
+        var clientId = "fake-id";
+        var clientSecret = "fake-secret";
+
+        var services = new ServiceCollection().AddAuth0AuthenticationClient(x =>
+        {
+            x.Domain = domain;
+            x.ClientId = clientId;
+            x.ClientSecret = clientSecret;
+        }).Services;
+
+        var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(IAuthenticationApiClient));
+
+        Assert.NotNull(serviceDescriptor);
+        Assert.Equal(ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+
+        var provider = services.BuildServiceProvider();
+
+        var authenticationClient = provider.GetService<IAuthenticationApiClient>();
+        Assert.NotNull(authenticationClient);
+        Assert.IsType<InjectableAuthenticationApiClient>(authenticationClient);
+
+        var authenticationHttpClient = provider.GetService<IAuthenticationConnection>();
+        Assert.NotNull(authenticationHttpClient);
+
+        var tokenCache = provider.GetService<IAuth0TokenCache>();
+        Assert.NotNull(tokenCache);
+
+        var fusionCache = provider.GetService<IFusionCacheProvider>();
+        Assert.NotNull(fusionCache);
+
+        var configuration = provider.GetService<IOptions<Auth0Configuration>>();
+
+        Assert.Equal(domain, configuration.Value.Domain);
+        Assert.Equal(clientId, configuration.Value.ClientId);
+        Assert.Equal(clientSecret, configuration.Value.ClientSecret);
+    }
+
+    [Fact]
+    public void AddAccessToken_Rejects_InvalidConfig()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new ServiceCollection().AddHttpClient<DummyClass>(x => { }).AddAccessToken(x => { }));
+    }
+
+    [Fact]
+    public void AddManagementClient_Can_BeResolved()
+    {
+        var customDomain = "custom-domain.com";
+        var clientId = "fake-id";
+        var clientSecret = "fake-secret";
+
+        var collection = new ServiceCollection();
+
+        collection.AddAuth0AuthenticationClient(x =>
+        {
+            x.Domain = customDomain;
+            x.ClientId = clientId;
+            x.ClientSecret = clientSecret;
+        });
+
+        var defaultDomain = "tenant.au.auth0.com";
+
+        collection.AddAuth0ManagementClient()
+            .AddManagementAccessToken(c =>
             {
-                x.Domain = "";
-                x.ClientId = "";
-                x.ClientSecret = "";
-            }).Services;
-
-            Assert.Throws<InvalidOperationException>(() => services.AddAuth0AuthenticationClientCore("test-url.au.auth0.com"));
-        }
-
-        [Fact]
-        public void AddAuth0AuthenticationClientCore_Resolves_AuthenticationClient()
-        {
-            var domain = "test-url.au.auth0.com";
-
-            var services = new ServiceCollection().AddAuth0AuthenticationClientCore(domain).Services;
-
-            var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(IAuthenticationApiClient)
-                                                                 && x.ImplementationType == typeof(InjectableAuthenticationApiClient));
-
-            Assert.NotNull(serviceDescriptor);
-            Assert.Equal(ServiceLifetime.Scoped, ServiceLifetime.Scoped);
-
-            var provider = services.BuildServiceProvider();
-
-            var authenticationClient = provider.GetService<IAuthenticationApiClient>();
-            Assert.NotNull(authenticationClient);
-            Assert.IsType<InjectableAuthenticationApiClient>(authenticationClient);
-
-            var authenticationHttpClient = provider.GetService<IAuthenticationConnection>();
-            Assert.NotNull(authenticationHttpClient);
-
-            var configuration = provider.GetService<IOptions<Auth0Configuration>>();
-            Assert.NotNull(configuration);
-            Assert.Equal(domain, configuration.Value.Domain);
-        }
-
-        [Fact]
-        public void AddAuth0AuthenticationClient_Throws_AuthenticationClientAlreadyRegistered()
-        {
-            var services = new ServiceCollection().AddAuth0AuthenticationClientCore("").Services;
-
-            Assert.Throws<InvalidOperationException>(() => services.AddAuth0AuthenticationClient(x =>
-            {
-                x.Domain = "";
-                x.ClientId = "";
-                x.ClientSecret = "";
-            }));
-        }
-
-        [Fact]
-        public void AddAuth0AuthenticationClient_Throws_InvalidConfiguration()
-        {
-            var services = new ServiceCollection().AddAuth0AuthenticationClient(x =>
-            {
-                x.Domain = "";
-                x.ClientId = "";
-                x.ClientSecret = "";
-            }).Services.BuildServiceProvider();
-
-            Assert.Throws<OptionsValidationException>(() => services.GetRequiredService<IAuthenticationApiClient>());
-        }
-
-        [Fact]
-        public void AddAuth0AuthenticationClient_Resolves_AuthenticationClient()
-        {
-            var domain = "test.au.auth0.com";
-            var clientId = "fake-id";
-            var clientSecret = "fake-secret";
-            var renewal = TimeSpan.FromMinutes(60);
-
-            var services = new ServiceCollection().AddAuth0AuthenticationClient(x =>
-            {
-                x.Domain = domain;
-                x.ClientId = clientId;
-                x.ClientSecret = clientSecret;
-                x.TokenExpiryBuffer = renewal;
-            }).Services;
-
-            var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(IAuthenticationApiClient));
-
-            Assert.NotNull(serviceDescriptor);
-            Assert.Equal(ServiceLifetime.Scoped, ServiceLifetime.Scoped);
-
-            var provider = services.BuildServiceProvider();
-
-            var authenticationClient = provider.GetService<IAuthenticationApiClient>();
-            Assert.NotNull(authenticationClient);
-            Assert.IsType<InjectableAuthenticationApiClient>(authenticationClient);
-
-            var authenticationHttpClient = provider.GetService<IAuthenticationConnection>();
-            Assert.NotNull(authenticationHttpClient);
-
-            var tokenCache = provider.GetService<IAuth0TokenCache>();
-            Assert.NotNull(tokenCache);
-
-            var appCache = provider.GetService<IAppCache>();
-            Assert.NotNull(appCache);
-
-            var configuration = provider.GetService<IOptions<Auth0Configuration>>();
-
-            Assert.Equal(domain, configuration.Value.Domain);
-            Assert.Equal(clientId, configuration.Value.ClientId);
-            Assert.Equal(clientSecret, configuration.Value.ClientSecret);
-            Assert.Equal(renewal, configuration.Value.TokenExpiryBuffer);
-        }
-
-        [Fact]
-        public void AddAccessToken_Rejects_InvalidConfig()
-        {
-            Assert.Throws<ArgumentException>(() =>
-                new ServiceCollection().AddHttpClient<DummyClass>(x => { }).AddAccessToken(x => { }));
-        }
-
-        [Fact]
-        public void AddManagementClient_Can_BeResolved()
-        {
-            var customDomain = "custom-domain.com";
-            var clientId = "fake-id";
-            var clientSecret = "fake-secret";
-            var renewal = TimeSpan.FromMinutes(60);
-
-            var collection = new ServiceCollection();
-
-            collection.AddAuth0AuthenticationClient(x =>
-            {
-                x.Domain = customDomain;
-                x.ClientId = clientId;
-                x.ClientSecret = clientSecret;
-                x.TokenExpiryBuffer = renewal;
+                c.Audience = defaultDomain;
             });
 
-            var defaultDomain = "tenant.au.auth0.com";
+        collection.AddHttpClient<DummyClass>().AddManagementAccessToken();
 
-            collection.AddAuth0ManagementClient()
-                .AddManagementAccessToken(c =>
-                {
-                    c.AudienceDomainOverride = defaultDomain;
-                });
+        var services = collection.BuildServiceProvider();
 
-            collection.AddHttpClient<DummyClass>().AddManagementAccessToken();
-
-            var services = collection.BuildServiceProvider();
-
-            var client = services.GetService<IManagementApiClient>();
+        var client = services.GetService<IManagementApiClient>();
             
-            Assert.NotNull(client);
-        }
-
+        Assert.NotNull(client);
     }
 
-    public class DummyClass
-    {
-    }
+}
 
+public class DummyClass
+{
 }

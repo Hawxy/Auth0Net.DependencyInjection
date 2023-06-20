@@ -1,20 +1,17 @@
-﻿using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Json;
 
-namespace Sample.ConsoleApp.Services
+namespace Sample.ConsoleApp.Services;
+
+public class UsersService
 {
-    public class UsersService
+    private readonly HttpClient _client;
+
+    public UsersService(HttpClient client)
     {
-        private readonly HttpClient _client;
-
-        public UsersService(HttpClient client)
-        {
-            _client = client;
-        }
-
-        public async Task<User[]?> GetUsersAsync() => await _client.GetFromJsonAsync<User[]>("users");
-
-        public record User(string Id, string Name, string Email);
+        _client = client;
     }
+
+    public async Task<User[]?> GetUsersAsync(CancellationToken ct) => await _client.GetFromJsonAsync<User[]>("users", cancellationToken: ct);
+
+    public record User(string Id, string Name, string Email);
 }
