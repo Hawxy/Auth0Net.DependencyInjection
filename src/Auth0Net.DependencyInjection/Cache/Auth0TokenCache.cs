@@ -71,12 +71,12 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
 
 internal static partial class Log
 {
-    [LoggerMessage(Message = "Auth0 Token was requested for audience: {audience}", Level = LogLevel.Debug)]
+    [LoggerMessage(EventId = 2001, Message = "Auth0 Token was requested for audience: {audience}", Level = LogLevel.Debug)]
     public static partial void TokenRequested(this ILogger logger, string audience);
     
-    [LoggerMessage(Message = "Auth0 Token cache is refreshing, fetching new token for audience: {audience}", Level = LogLevel.Debug)]
+    [LoggerMessage(EventId = 2002, Message = "Auth0 Token cache is refreshing, fetching new token for audience: {audience}", Level = LogLevel.Debug)]
     public static partial void CacheFetch(this ILogger logger, string audience);
     
-    [LoggerMessage(Message = "Auth0 Token for audience {audience} will expire in {expiry} seconds", Level = LogLevel.Debug)]
+    [LoggerMessage(EventId = 2003, Message = "Auth0 Token for audience {audience} will expire in {expiry} seconds", Level = LogLevel.Debug)]
     public static partial void ExpiresAt(this ILogger logger, string audience, double expiry);
 }
