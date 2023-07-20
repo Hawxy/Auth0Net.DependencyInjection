@@ -64,9 +64,9 @@ Add the `AuthenticationApiClient` with `AddAuth0AuthenticationClient`, and provi
  ```csharp
 services.AddAuth0AuthenticationClient(config =>
 {
-    config.Domain = Configuration["Auth0:Domain"];
-    config.ClientId = Configuration["Auth0:ClientId"];
-    config.ClientSecret = Configuration["Auth0:ClientSecret"];
+    config.Domain = builder.Configuration["Auth0:Domain"];
+    config.ClientId = builder.Configuration["Auth0:ClientId"];
+    config.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
 });
 ```
 
@@ -117,8 +117,8 @@ This library includes a delegating handler - effectively middleware for your Htt
 Use `AddAccessToken` along with the required audience:
 
 ```csharp
-services.AddHttpClient<MyHttpService>(x => x.BaseAddress = new Uri(context.Configuration["MyHttpService:Url"]))
-        .AddAccessToken(config => config.Audience = context.Configuration["MyHttpService:Audience"]);
+services.AddHttpClient<MyHttpService>(x => x.BaseAddress = new Uri(builder.Configuration["MyHttpService:Url"]))
+        .AddAccessToken(config => config.Audience = builder.Configuration["MyHttpService:Audience"]);
 ```
 
 #### Grpc
@@ -126,8 +126,8 @@ services.AddHttpClient<MyHttpService>(x => x.BaseAddress = new Uri(context.Confi
 This extension is compatible with any registration that returns a `IHttpClientBuilder`, thus it can be used with [Grpc's client factory](https://docs.microsoft.com/en-us/aspnet/core/grpc/clientfactory):
 
 ```csharp
-services.AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(context.Configuration["MyGrpcService:Url"]))
-        .AddAccessToken(config => config.Audience = context.Configuration["MyGrpcService:Audience"]);
+services.AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(builder.Configuration["MyGrpcService:Url"]))
+        .AddAccessToken(config => config.Audience = builder.Configuration["MyGrpcService:Audience"]);
 ```
 
 #### Advanced
@@ -170,7 +170,7 @@ For example, formatting the domain for the JWT Authority:
 .AddJwtBearer(options =>
              {
                  // "my-tenant.auth0.com" -> "https://my-tenant.auth0.com/"
-                 options.Authority = Configuration["Auth0:Domain"].ToHttpsUrl();
+                 options.Authority = builder.Configuration["Auth0:Domain"].ToHttpsUrl();
                  //...
              });
  ```
