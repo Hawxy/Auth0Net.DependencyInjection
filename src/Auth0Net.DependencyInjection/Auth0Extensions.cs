@@ -105,7 +105,7 @@ public static class Auth0Extensions
     /// Adds a <see cref="ManagementApiClient" /> integrated with <see cref="IHttpClientBuilder" /> to the <see cref="IServiceCollection" />.
     /// </summary>
     /// <remarks>
-    /// The domain used to construct the Management connection is the same as set in <see cref="AddAuth0AuthenticationClient"/>.
+    /// The domain used to construct the Management connection is the same as set in <see cref="AddAuth0AuthenticationClient(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Auth0Net.DependencyInjection.Cache.Auth0Configuration})"/>.
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" />.</param>
     /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientManagementConnection"/>.</returns>
@@ -142,8 +142,10 @@ public static class Auth0Extensions
 
     /// <summary>
     /// Adds a <see cref="DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Management Access Token token to the Authorization header.
-    /// The domain used to resolve the token is the same as set in <see cref="AddAuth0AuthenticationClient(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Auth0Net.DependencyInjection.Cache.Auth0Configuration})"/>, unless overriden.
     /// </summary>
+    /// <remarks>
+    /// The domain used to resolve the token is the same as set in <see cref="AddAuth0AuthenticationClient(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Auth0Net.DependencyInjection.Cache.Auth0Configuration})"/>, unless overriden.
+    /// </remarks>
     /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure.</param>
     /// <param name="config">Additional configuration for the management client for custom domain scenarios.</param>
     /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClient"/>.</returns>
