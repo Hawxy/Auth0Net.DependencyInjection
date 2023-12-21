@@ -128,6 +128,35 @@ public class ExtensionTests
         Assert.Equal(clientSecret, configuration.Value.ClientSecret);
     }
 
+    public sealed record FakeConfiguration(string Domain, string ClientId, string ClientSecret);
+    
+    [Fact]
+    public void AddAuth0AuthenticationClient_WithServiceCollection_CanBeResolved()
+    {
+        var domain = "test.au.auth0.com";
+        var clientId = "fake-id";
+        var clientSecret = "fake-secret";
+        
+        var services = new ServiceCollection();
+
+        services.AddSingleton(new FakeConfiguration(domain, clientId, clientSecret));
+
+        services.AddAuth0AuthenticationClient((x, p) =>
+        {
+            var config = p.GetRequiredService<FakeConfiguration>();
+            
+            x.Domain = config.Domain;
+            x.ClientId = config.ClientId;
+            x.ClientSecret = config.ClientSecret;
+        });
+
+        var collection = services.BuildServiceProvider();
+        
+        var authenticationClient = collection.GetService<IAuthenticationApiClient>();
+        Assert.NotNull(authenticationClient);
+        Assert.IsType<InjectableAuthenticationApiClient>(authenticationClient);
+    }
+
     [Fact]
     public void AddAccessToken_Rejects_InvalidConfig()
     {

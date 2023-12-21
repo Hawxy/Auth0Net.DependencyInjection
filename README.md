@@ -6,7 +6,7 @@
 <img align="center" src="https://user-images.githubusercontent.com/975824/128343470-8d97e39d-ff8a-4daf-8ebf-f9039a46abd6.png" height="130px" />
 </h1>
 
-Integrating [Auth0.NET](https://github.com/auth0/auth0.net) into your project whilst attempting to follow idiomatic .NET Core conventions can be cumbersome and involve a sizable amount of boilerplate shared between projects. 
+Integrating [Auth0.NET](https://github.com/auth0/auth0.net) into your project whilst following idiomatic .NET conventions can be cumbersome and involve a sizable amount of boilerplate shared between projects. 
 
 This library hopes to solve that problem, featuring:
 
@@ -18,7 +18,7 @@ This library hopes to solve that problem, featuring:
  
  :white_check_mark: `IHttpClientBuilder` extensions, providing handlers to automatically append access tokens to outgoing requests.
  
- This library supports .NET 6 & .NET 7, and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
+ This library supports .NET 6+, and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
  
  ## Install
  
