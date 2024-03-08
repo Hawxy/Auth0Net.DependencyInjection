@@ -46,18 +46,18 @@ public static class Auth0Extensions
     /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientAuthenticationConnection"/>.</returns>
     public static IHttpClientBuilder AddAuth0AuthenticationClient(this IServiceCollection services, Action<Auth0Configuration> config)
     {
-        if(services.Any(x=> x.ServiceType == typeof(IAuthenticationApiClient)))
+        if (services.Any(x => x.ServiceType == typeof(IAuthenticationApiClient)))
             throw new InvalidOperationException("AuthenticationApiClient has already been registered!");
 
         services.AddOptions<Auth0Configuration>()
             .Configure(config)
             .Validate(x => !string.IsNullOrWhiteSpace(x.ClientId) && !string.IsNullOrWhiteSpace(x.Domain) && !string.IsNullOrWhiteSpace(x.ClientSecret),
                 "Auth0 Configuration cannot have empty values");
-        
+
         return services.AddAuth0AuthenticationClientInternal(true);
     }
-    
-    
+
+
     /// <summary>
     /// Adds a <see cref="AuthenticationApiClient" /> integrated with <see cref="IHttpClientBuilder" /> as well as the <see cref="IAuth0TokenCache" /> and related services to the <see cref="IServiceCollection" />.
     /// </summary>
@@ -69,14 +69,14 @@ public static class Auth0Extensions
     /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientAuthenticationConnection"/>.</returns>
     public static IHttpClientBuilder AddAuth0AuthenticationClient(this IServiceCollection services, Action<Auth0Configuration, IServiceProvider> config)
     {
-        if(services.Any(x=> x.ServiceType == typeof(IAuthenticationApiClient)))
+        if (services.Any(x => x.ServiceType == typeof(IAuthenticationApiClient)))
             throw new InvalidOperationException("AuthenticationApiClient has already been registered!");
 
         services.AddOptions<Auth0Configuration>()
             .Configure(config)
             .Validate(x => !string.IsNullOrWhiteSpace(x.ClientId) && !string.IsNullOrWhiteSpace(x.Domain) && !string.IsNullOrWhiteSpace(x.ClientSecret),
                 "Auth0 Configuration cannot have empty values");
-        
+
         return services.AddAuth0AuthenticationClientInternal(true);
     }
 
@@ -91,15 +91,17 @@ public static class Auth0Extensions
 
         services.AddSingleton<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
         return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>()
-            .ConfigurePrimaryHttpMessageHandler(() => 
+#if !NETSTANDARD2_0
+            .ConfigurePrimaryHttpMessageHandler(() =>
                 new SocketsHttpHandler()
                 {
                     PooledConnectionLifetime = TimeSpan.FromMinutes(2)
                 })
+#endif
             .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
     }
-    
-    
+
+
 
     /// <summary>
     /// Adds a <see cref="ManagementApiClient" /> integrated with <see cref="IHttpClientBuilder" /> to the <see cref="IServiceCollection" />.
@@ -114,11 +116,13 @@ public static class Auth0Extensions
         services.AddSingleton<IManagementApiClient, InjectableManagementApiClient>();
 
         return services.AddHttpClient<IManagementConnection, HttpClientManagementConnection>()
-            .ConfigurePrimaryHttpMessageHandler(() => 
+#if !NETSTANDARD2_0
+            .ConfigurePrimaryHttpMessageHandler(() =>
                 new SocketsHttpHandler()
                 {
                     PooledConnectionLifetime = TimeSpan.FromMinutes(2)
                 })
+#endif
             .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
     }
 
@@ -136,7 +140,7 @@ public static class Auth0Extensions
         if (c.AudienceResolver is null && string.IsNullOrWhiteSpace(c.Audience))
             throw new ArgumentException("Audience or AudienceResolver must be set");
 
-        return builder.AddHttpMessageHandler(provider => 
+        return builder.AddHttpMessageHandler(provider =>
             new Auth0TokenHandler(provider.GetRequiredService<IAuth0TokenCache>(), c));
     }
 
