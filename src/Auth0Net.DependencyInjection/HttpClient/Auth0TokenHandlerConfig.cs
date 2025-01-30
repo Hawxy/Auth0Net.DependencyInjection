@@ -1,4 +1,6 @@
-﻿namespace Auth0Net.DependencyInjection.HttpClient;
+﻿using System.Net.Http;
+
+namespace Auth0Net.DependencyInjection.HttpClient;
 
 /// <summary>
 /// Configuration used by the underlying <see cref="Auth0TokenHandler"/>. 

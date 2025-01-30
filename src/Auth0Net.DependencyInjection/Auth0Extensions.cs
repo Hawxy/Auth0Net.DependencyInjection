@@ -91,7 +91,7 @@ public static class Auth0Extensions
 
         services.AddSingleton<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
         return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>()
-#if !NETSTANDARD2_0
+#if !NETFRAMEWORK
             .ConfigurePrimaryHttpMessageHandler(() =>
                 new SocketsHttpHandler()
                 {
@@ -116,7 +116,7 @@ public static class Auth0Extensions
         services.AddSingleton<IManagementApiClient, InjectableManagementApiClient>();
 
         return services.AddHttpClient<IManagementConnection, HttpClientManagementConnection>()
-#if !NETSTANDARD2_0
+#if !NETFRAMEWORK
             .ConfigurePrimaryHttpMessageHandler(() =>
                 new SocketsHttpHandler()
                 {
