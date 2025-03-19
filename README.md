@@ -24,8 +24,8 @@ This library hopes to solve that problem, featuring:
  
  Add `Auth0Net.DependencyInjection` to your project:
  
- ```ps
-Install-Package Auth0Net.DependencyInjection
+ ```
+dotnet add package Auth0Net.DependencyInjection
 ```
  
  ## Scenarios
