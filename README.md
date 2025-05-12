@@ -140,6 +140,8 @@ services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MySer
         .AddAccessToken(config => config.AudienceResolver = request => request.RequestUri.GetLeftPart(UriPartial.Authority));
 ```
 
+## Additional Functionality
+
 ### Enhanced Resilience
 
 The default rate-limit behaviour in Auth0.NET is suboptimal, as it uses random backoff rather than reading the rate limit headers returned by Auth0.
@@ -155,6 +157,25 @@ services.AddAuth0ManagementClient()
 When a retry occurs, you should see a warning log similar to:
 
 `Resilience event occurred. EventName: '"OnRetry"', Source: '"IManagementConnection-RateLimitRetry"/""/"Retry"', Operation Key: 'null', Result: '429'`
+
+### Utility 
+
+This library exposes a simple string extension, `ToHttpsUrl()`, that can be used to format the naked Auth0 domain sitting in your configuration into a proper URL.
+
+This is identical to `https://{Configuration["Auth0:Domain"]}/` that you usually end up writing _somewhere_ in your `Startup.cs`.
+
+For example, formatting the domain for the JWT Authority:
+
+```csharp
+.AddJwtBearer(options =>
+             {
+                 // "my-tenant.auth0.com" -> "https://my-tenant.auth0.com/"
+                 options.Authority = builder.Configuration["Auth0:Domain"].ToHttpsUrl();
+                 //...
+             });
+ ```
+
+## Internals
 
 ### Client Lifetimes
 
@@ -173,23 +194,6 @@ An additional 1% of lifetime is removed to protect against clock drift between d
 In some situations you might want to request an access token from Auth0 manually. You can achieve this by injecting `IAuth0TokenCache` into a class and calling `GetTokenAsync` with the audience of the API you're requesting the token for.
 
 An in-memory-only instance of [FusionCache](https://github.com/ZiggyCreatures/FusionCache) is used as the caching implementation. This instance is _named_ and will not impact other usages of FusionCache.
-
-### Utility 
-
-This library exposes a simple string extension, `ToHttpsUrl()`, that can be used to format the naked Auth0 domain sitting in your configuration into a proper URL.
-
-This is identical to `https://{Configuration["Auth0:Domain"]}/` that you usually end up writing _somewhere_ in your `Startup.cs`.
-
-For example, formatting the domain for the JWT Authority:
-
-```csharp
-.AddJwtBearer(options =>
-             {
-                 // "my-tenant.auth0.com" -> "https://my-tenant.auth0.com/"
-                 options.Authority = builder.Configuration["Auth0:Domain"].ToHttpsUrl();
-                 //...
-             });
- ```
 
 ## Disclaimer
 
