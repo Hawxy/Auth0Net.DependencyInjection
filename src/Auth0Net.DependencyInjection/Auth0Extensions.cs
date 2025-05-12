@@ -92,6 +92,7 @@ public static class Auth0Extensions
         services.AddSingleton<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
         return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>()
 #if !NETFRAMEWORK
+            // TODO drop this code with the release of .NET 10
             .ConfigurePrimaryHttpMessageHandler(() =>
                 new SocketsHttpHandler()
                 {

@@ -40,9 +40,9 @@ public class CacheTests
         var cache = new Auth0TokenCache(authClient, new FusionCacheTestProvider(), new NullLogger<Auth0TokenCache>(), config);
 
         var key = "api://my-audience";
-        var resFirst = await cache.GetTokenAsync(key);
+        var resFirst = await cache.GetTokenAsync(key, TestContext.Current.CancellationToken);
         Assert.Equal(accessTokenFirst, resFirst);
-        await Task.Delay(1000);
+        await Task.Delay(1000, TestContext.Current.CancellationToken);
 
 
         var accessTokenSecond = Guid.NewGuid().ToString();
@@ -54,7 +54,7 @@ public class CacheTests
                 ExpiresIn = 1
             });
             
-        var resSecond = await cache.GetTokenAsync(key);
+        var resSecond = await cache.GetTokenAsync(key, TestContext.Current.CancellationToken);
         Assert.Equal(accessTokenSecond, resSecond);
 
         A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored))

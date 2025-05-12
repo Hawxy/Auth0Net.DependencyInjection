@@ -140,6 +140,22 @@ services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MySer
         .AddAccessToken(config => config.AudienceResolver = request => request.RequestUri.GetLeftPart(UriPartial.Authority));
 ```
 
+### Enhanced Resilience
+
+The default rate-limit behaviour in Auth0.NET is suboptimal, as it uses random backoff rather than reading the rate limit headers returned by Auth0.
+This package includes an additional `.AddAuth0RateLimitResilience()` extension that adds improved rate limit handling to the Auth0 clients.
+If you're running into rate limit failures, I highly recommend adding this functionality:
+
+```csharp
+services.AddAuth0ManagementClient()
+    .AddManagementAccessToken()
+    .AddAuth0RateLimitResilience();
+```
+
+When a retry occurs, you should see a warning log similar to:
+
+`Resilience event occurred. EventName: '"OnRetry"', Source: '"IManagementConnection-RateLimitRetry"/""/"Retry"', Operation Key: 'null', Result: '429'`
+
 ### Client Lifetimes
 
 Both the authentication and authorization clients are registered as singletons and are suitable for injection into any other lifetime.

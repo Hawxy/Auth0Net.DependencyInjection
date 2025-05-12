@@ -1,11 +1,10 @@
 #if NET8_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 
-namespace Auth0Net.DependencyInjection.HttpClient;
+namespace Auth0Net.DependencyInjection;
 
 /// <summary>
 /// Extensions used to enhance Auth0 client resilience.
@@ -13,18 +12,17 @@ namespace Auth0Net.DependencyInjection.HttpClient;
 public static class Auth0ResilienceExtensions
 {
     /// <summary>
-    /// Adds enhanced rate limiting support to the Auth0 Client. This API is experimental.
+    /// Adds enhanced rate limiting support to the Auth0 Client.
     /// </summary>
-    /// <param name="builder"></param>
+    /// <param name="builder">The underlying <see cref="IHttpClientBuilder"/></param>
+    /// <param name="maxRetryAttempts">The max number of retry attempts to Auth0. Defaults to 10.</param>
     /// <returns></returns>
-    [Experimental("Auth0DIExperimental")]
-    public static IHttpResiliencePipelineBuilder AddAuth0RateLimitResilience(this IHttpClientBuilder builder)
+    public static IHttpResiliencePipelineBuilder AddAuth0RateLimitResilience(this IHttpClientBuilder builder, int maxRetryAttempts = 10)
     {
         return builder.AddResilienceHandler("RateLimitRetry",
-            static builder =>
+            pipelineBuilder =>
             {
-                // See: https://www.pollydocs.org/strategies/retry.html
-                builder.AddRetry(new HttpRetryStrategyOptions
+                pipelineBuilder.AddRetry(new HttpRetryStrategyOptions
                 {
                     // Disable the default handling of Retry-After header
                     ShouldRetryAfterHeader = false,
@@ -41,8 +39,7 @@ public static class Auth0ResilienceExtensions
 
                         return new ValueTask<TimeSpan?>((TimeSpan?)null);
                     },
-    
-                    MaxRetryAttempts = 10,
+                    MaxRetryAttempts = maxRetryAttempts,
                     Delay = TimeSpan.FromSeconds(2)
                 });
             });
