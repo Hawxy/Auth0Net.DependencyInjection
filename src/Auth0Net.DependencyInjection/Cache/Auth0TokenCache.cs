@@ -35,7 +35,10 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
     }
 
     /// <inheritdoc cref="IAuth0TokenCache"/>
-    public async ValueTask<string> GetTokenAsync(string audience, CancellationToken token = default)
+    public ValueTask<string> GetTokenAsync(string audience, CancellationToken token = default) => GetTokenAsync(audience, null, token);
+
+    /// <inheritdoc cref="IAuth0TokenCache"/>
+    public async ValueTask<string> GetTokenAsync(string audience, string? organization = null, CancellationToken token = default)
     {
         _logger.TokenRequested(audience);
 
@@ -50,6 +53,11 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
                 Audience = audience
             };
 
+            if (!string.IsNullOrEmpty(organization))
+            {
+                tokenRequest.Organization = organization;
+            }   
+            
             var response = await _client.GetTokenAsync(tokenRequest, ct);
 
             var computedExpiry = Math.Ceiling(response.ExpiresIn - response.ExpiresIn * TokenExpiryBuffer);
