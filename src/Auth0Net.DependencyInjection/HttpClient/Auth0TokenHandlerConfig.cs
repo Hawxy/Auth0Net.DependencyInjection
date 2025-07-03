@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 
 namespace Auth0Net.DependencyInjection.HttpClient;
 
@@ -20,5 +20,16 @@ public sealed class Auth0TokenHandlerConfig
     /// A value set in <see cref="Audience"/> will take precedence over any resolver set here - be careful not to mix the two.
     /// </remarks>
     public Func<HttpRequestMessage, string>? AudienceResolver { get; set; }
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    public string? Organization { get; set; }
+    /// <summary>
+    /// A resolver that will compute the org_name or org_id during the request.
+    ///
+    /// </summary>
+    public Func<HttpRequestMessage, string>? OrganizationResolver { get; set; }
+
     
 }

@@ -30,7 +30,15 @@ public class Auth0TokenHandler : DelegatingHandler
     {
         var audience = _handlerConfig.Audience ?? _handlerConfig.AudienceResolver?.Invoke(request) ?? throw new ArgumentException("Audience cannot be computed");
 
-        request.Headers.Authorization = new AuthenticationHeaderValue(Scheme, await _cache.GetTokenAsync(audience, cancellationToken));
+        #if NET8_0_OR_GREATER
+        var org = request.Options.GetOrganization() ?? _handlerConfig.Organization ?? _handlerConfig.AudienceResolver?.Invoke(request);
+        var token = await _cache.GetTokenAsync(audience, org, cancellationToken);
+        #else
+        var token = await _cache.GetTokenAsync(audience, cancellationToken);
+        #endif
+        
+        request.Headers.Authorization = new AuthenticationHeaderValue(Scheme, token);
+        
         return await base.SendAsync(request, cancellationToken);
     }
 }
