@@ -14,20 +14,18 @@ using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
 
-[GitHubActions(
+[GithubActionsExtended(
     "Build & Test",
     GitHubActionsImage.UbuntuLatest,
-    OnPushBranches = new []{ "main" },
-    OnPullRequestBranches = new []{ "main" },
-    InvokedTargets = new[] { nameof(Test) },
-    AutoGenerate = false)]
-[GitHubActions(
+    OnPushBranches = ["main"],
+    OnPullRequestBranches = ["main"],
+    InvokedTargets = [nameof(Test)])]
+[GithubActionsExtended(
     "Manual Nuget Push",
     GitHubActionsImage.UbuntuLatest,
-    On = new[] { GitHubActionsTrigger.WorkflowDispatch },
-    InvokedTargets = new[] { nameof(NugetPush) },
-    ImportSecrets = new[] { nameof(NugetApiKey) },
-    AutoGenerate = false)]
+    On = [GitHubActionsTrigger.WorkflowDispatch],
+    InvokedTargets = [nameof(NugetPush)],
+    ImportSecrets = [nameof(NugetApiKey)])]
 class Build : NukeBuild
 {
     /// Support plugins are available for:

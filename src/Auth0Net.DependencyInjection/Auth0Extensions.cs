@@ -91,15 +91,16 @@ public static class Auth0Extensions
 
         services.AddSingleton<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
         return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>()
-#if !NETFRAMEWORK
-            // TODO drop this code with the release of .NET 10
+#if NET8_0
             .ConfigurePrimaryHttpMessageHandler(() =>
                 new SocketsHttpHandler()
                 {
                     PooledConnectionLifetime = TimeSpan.FromMinutes(2)
                 })
+        .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
 #endif
-            .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
+            ;
+
     }
 
 
@@ -117,14 +118,15 @@ public static class Auth0Extensions
         services.AddSingleton<IManagementApiClient, InjectableManagementApiClient>();
 
         return services.AddHttpClient<IManagementConnection, HttpClientManagementConnection>()
-#if !NETFRAMEWORK
+#if NET8_0
             .ConfigurePrimaryHttpMessageHandler(() =>
                 new SocketsHttpHandler()
                 {
                     PooledConnectionLifetime = TimeSpan.FromMinutes(2)
                 })
+            .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
 #endif
-            .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
+            ;
     }
 
     /// <summary>
