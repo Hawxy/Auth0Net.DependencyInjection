@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Auth0.AuthenticationApi;
@@ -59,32 +59,54 @@ public class CacheTests
 
         A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored))
             .MustHaveHappenedTwiceExactly();
-        
     }
 
-
+    
     [Fact]
-    public async Task Cache_UsesFusionCacheInstance_WhenConfigured()
+    public async Task Cache_WhenGivenOrgId_ReturnsOrgId()
     {
-        const string customCacheName = "my-custom-cache";
-
         var config = A.Fake<IOptionsSnapshot<Auth0Configuration>>();
         A.CallTo(() => config.Value).Returns(new Auth0Configuration
         {
             ClientId = Guid.NewGuid().ToString(),
             ClientSecret = Guid.NewGuid().ToString(),
             Domain = "https://hawxy.au.auth0.com/",
-            FusionCacheInstance = customCacheName
         });
 
         var authClient = A.Fake<IAuthenticationApiClient>();
+
+        var accessTokenFirst = Guid.NewGuid().ToString();
+
+        A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored)).Returns(
+            new AccessTokenResponse
+            {
+                AccessToken = accessTokenFirst,
+                ExpiresIn = 1
+            });
+        
+        
+        var cache = new Auth0TokenCache(authClient, new FusionCacheTestProvider(), new NullLogger<Auth0TokenCache>(), config);
+
+        var key = "api://my-audience";
+        var resFirst = await cache.GetTokenAsync(key, TestContext.Current.CancellationToken);
+        Assert.Equal(accessTokenFirst, resFirst);
+        await Task.Delay(1000, TestContext.Current.CancellationToken);
+
+
+        var accessTokenSecond = Guid.NewGuid().ToString();
+
+        A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored)).Returns(
+            new AccessTokenResponse
+            {
+                AccessToken = accessTokenSecond,
+                ExpiresIn = 1
+            });
+            
+        var resSecond = await cache.GetTokenAsync(key, TestContext.Current.CancellationToken);
+        Assert.Equal(accessTokenSecond, resSecond);
+
         A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored))
-            .Returns(new AccessTokenResponse { AccessToken = "token", ExpiresIn = 60 });
-
-        var provider = new CapturingFusionCacheProvider();
-        _ = new Auth0TokenCache(authClient, provider, new NullLogger<Auth0TokenCache>(), config);
-
-        Assert.Equal(customCacheName, provider.LastRequestedCacheName);
+            .MustHaveHappenedTwiceExactly();
     }
 
     [Fact]

@@ -105,7 +105,7 @@ services.AddAuth0ManagementClient()
     });
 ```
 
-### With HttpClient and/or Grpc Services (Machine-To-Machine tokens)
+### External HttpClient & Grpc Services (Machine-To-Machine Tokens)
 
 ![Auth0AuthenticationAll](https://user-images.githubusercontent.com/975824/128319653-418e0e72-2ddf-4d02-9544-1d60bd523321.png)
 
@@ -139,6 +139,55 @@ services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MySer
         .AddServiceDiscovery()
         .AddAccessToken(config => config.AudienceResolver = request => request.RequestUri.GetLeftPart(UriPartial.Authority));
 ```
+
+
+### M2M Organizations Support
+
+This library includes support for [Machine-to-Machine (M2M) Access for Organizations](https://auth0.com/docs/manage-users/organizations/organizations-for-m2m-applications), including static and dynamic scenarios.
+This feature is important if your internal or third-party services expect a token to be scoped to a specific Auth0 organization.
+
+#### Static Organization
+
+Clients that simply require a single organization for a specific client can do so via setting the `Organization` property when configuring the access token:
+
+```csharp
+builder.Services
+    .AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(builder.Configuration["AspNetCore:Url"]!))
+    .AddAccessToken(config =>
+    {
+        config.Audience = builder.Configuration["AspNetCore:Audience"];
+        config.Organization = builder.Configuration["AspNetCore:Audience"];
+    });
+```
+
+#### Dynamic Organization via Request Metadata
+
+If you already include org metadata as part of your network request or via the request options, you can choose to resolve the organization at runtime via the `OrganizationResolver`:
+
+```csharp
+builder.Services
+    .AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(builder.Configuration["AspNetCore:Url"]!))
+    .AddAccessToken(config =>
+    {
+        config.Audience = builder.Configuration["AspNetCore:Audience"];
+        config.OrganizationResolver = x =>
+            x.Headers.TryGetValues("org-id", out var values) 
+                ? values.SingleOrDefault() 
+                : null;
+    });
+```
+
+#### Dynamic Organization via Client Scope (Experimental)
+
+If your organization source is scoped to the usage of your service, such as an ASP.NET Core request, then you'll likely want the ability to freely set the Organization.
+You can achieve this by injecting your client via `OrganizationScopeFactory<TClient>` and then creating an organization scope via `.CreateScope`:
+
+There's a few caveats if you're using this functionality, as it utilizes an `AsyncLocal` internally:
+
+- Never use multiple client scopes at the same time, either with the same or different client types.
+- Never call any other client that utilizes `.AddAccessToken` within a client scope.
+
+Doing any of the above is likely to result in the wrong Organization ID/Name being used for a given request.
 
 ## Additional Functionality
 

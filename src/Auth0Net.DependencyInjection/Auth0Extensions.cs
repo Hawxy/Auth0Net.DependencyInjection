@@ -4,6 +4,7 @@ using Auth0Net.DependencyInjection.Cache;
 using Auth0Net.DependencyInjection.Factory;
 using Auth0Net.DependencyInjection.HttpClient;
 using Auth0Net.DependencyInjection.Injectables;
+using Auth0Net.DependencyInjection.Organizations;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Auth0Net.DependencyInjection;
@@ -89,6 +90,10 @@ public static class Auth0Extensions
             services.AddSingleton<IAuth0TokenCache, Auth0TokenCache>();
         }
 
+        services.AddSingleton<HttpClientOrganizationAccessor>();
+#pragma warning disable AUTH0_EXPERIMENTAL
+        services.AddTransient(typeof(OrganizationScopeFactory<>));
+#pragma warning restore AUTH0_EXPERIMENTAL
         services.AddSingleton<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
         return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>()
 #if NET8_0
@@ -151,6 +156,6 @@ public static class Auth0Extensions
             throw new ArgumentException("Audience or AudienceResolver must be set");
 
         return builder.AddHttpMessageHandler(provider =>
-            new Auth0TokenHandler(provider.GetRequiredService<IAuth0TokenCache>(), c));
+            new Auth0TokenHandler(provider.GetRequiredService<IAuth0TokenCache>(), c, provider.GetRequiredService<HttpClientOrganizationAccessor>()));
     }
 }

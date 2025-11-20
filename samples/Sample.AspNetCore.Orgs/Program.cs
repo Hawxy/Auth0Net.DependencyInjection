@@ -1,14 +1,13 @@
-using System.Security.Claims;
-using Auth0.ManagementApi;
 using Auth0Net.DependencyInjection;
 using Auth0Net.DependencyInjection.HttpClient;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Sample.AspNetCore.Protos;
-
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
 
 // An extension method is included to convert a naked auth0 domain (my-tenant.auth0.au.com) to the correct format (https://my-tenant-auth0.au.com/)
 string domain = builder.Configuration["Auth0:Domain"]!.ToHttpsUrl();
@@ -22,15 +21,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // We'll require all endpoints to be authorized by default
-builder.Services.AddAuthorization(options =>
-{
-    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
-        .Build();
-});
-
-// If you're just using the authentication client and nothing else, you can use this lightweight version instead.
-// builder.Services.AddAuth0AuthenticationClientCore(domain);
+        .Build());
 
 
 // Adds the AuthenticationApiClient client and provides configuration to be consumed by the management client, token cache, and IHttpClientBuilder integrations
@@ -42,24 +36,43 @@ builder.Services.AddAuth0AuthenticationClient(config =>
 });
 
 // Adds the ManagementApiClient with automatic injection of the management token based on the configuration set above.
-builder.Services.AddAuth0ManagementClient();
-
-builder.Services.AddGrpc();
+builder.Services.AddAuth0ManagementClient().AddManagementAccessToken();
 
 var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGrpcService<UsersService>();
-
-app.MapGet("/users", async ([FromServices] IManagementApiClient client, HttpContext context) =>
+var summaries = new[]
 {
-    var orgId = context.User.FindFirstValue("org_id");
-    var user = await client.Users.ListAsync(new ListUsersRequestParameters() { });
+    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+};
 
-    return user.CurrentPage.Select(x => new Sample.AspNetCore.User(x.UserId, x.Name, x.Email)).ToArray();
-});
-
+app.MapGet("/weatherforecast", () =>
+    {
+        var forecast = Enumerable.Range(1, 5).Select(index =>
+                new WeatherForecast
+                (
+                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+                    Random.Shared.Next(-20, 55),
+                    summaries[Random.Shared.Next(summaries.Length)]
+                ))
+            .ToArray();
+        return forecast;
+    })
+    .WithName("GetWeatherForecast");
 
 app.Run();
+
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+{
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+}

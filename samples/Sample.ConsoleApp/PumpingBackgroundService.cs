@@ -1,4 +1,6 @@
-﻿using Sample.ConsoleApp.Services;
+﻿using Auth0Net.DependencyInjection.HttpClient;
+using Auth0Net.DependencyInjection.Organizations;
+using Sample.ConsoleApp.Services;
 using User;
 
 namespace Sample.ConsoleApp;
@@ -8,13 +10,14 @@ public class PumpingBackgroundService : BackgroundService
 {
     private readonly UsersService _usersService;
     private readonly UserService.UserServiceClient _usersClient;
-    private readonly ILogger<PumpingBackgroundService> _logger;
+    private readonly ILogger<PumpingBackgroundService> _logger; 
 
-    public PumpingBackgroundService(UsersService usersService, UserService.UserServiceClient usersClient, ILogger<PumpingBackgroundService> logger)
+    public PumpingBackgroundService(UsersService usersService, UserService.UserServiceClient usersClient, ILogger<PumpingBackgroundService> logger) 
     {
         _usersService = usersService;
         _usersClient = usersClient;
         _logger = logger;
+
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

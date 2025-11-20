@@ -29,7 +29,7 @@ public sealed class Auth0TokenHandlerConfig
     /// A resolver that will compute the org_name or org_id during the request.
     ///
     /// </summary>
-    public Func<HttpRequestMessage, string>? OrganizationResolver { get; set; }
+    public Func<HttpRequestMessage, string?>? OrganizationResolver { get; set; }
 
     
 }
