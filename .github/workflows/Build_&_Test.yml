@@ -5,7 +5,7 @@
 #
 #     - To turn off auto-generation set:
 #
-#         [GitHubActions (AutoGenerate = false)]
+#         [GithubActionsExtended (AutoGenerate = false)]
 #
 #     - To trigger manual generation invoke:
 #
@@ -31,7 +31,17 @@ jobs:
     steps:
       - uses: actions/setup-dotnet@v4
         with:
-         dotnet-version: '9'
+          dotnet-version: |
+            8.0
+            9.0
+            10.0
       - uses: actions/checkout@v4
+      - name: 'Cache: .nuke/temp, ~/.nuget/packages'
+        uses: actions/cache@v4
+        with:
+          path: |
+            .nuke/temp
+            ~/.nuget/packages
+          key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props') }}
       - name: 'Run: Test'
         run: ./build.cmd Test

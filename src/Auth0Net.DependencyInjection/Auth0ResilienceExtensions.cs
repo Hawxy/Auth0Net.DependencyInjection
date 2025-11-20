@@ -17,7 +17,7 @@ public static class Auth0ResilienceExtensions
     /// <param name="builder">The underlying <see cref="IHttpClientBuilder"/></param>
     /// <param name="maxRetryAttempts">The max number of retry attempts to Auth0. Defaults to 10.</param>
     /// <returns></returns>
-    public static IHttpResiliencePipelineBuilder AddAuth0RateLimitResilience(this IHttpClientBuilder builder, int maxRetryAttempts = 10)
+    public static IHttpResiliencePipelineBuilder AddAuth0RateLimitResilience(this IHttpClientBuilder builder, int maxRetryAttempts = 4)
     {
         return builder.AddResilienceHandler("RateLimitRetry",
             pipelineBuilder =>
