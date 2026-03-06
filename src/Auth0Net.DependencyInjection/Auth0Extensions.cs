@@ -115,18 +115,10 @@ public static class Auth0Extensions
     /// The domain used to construct the Management connection is the same as set in <see cref="AddAuth0AuthenticationClient(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Auth0Net.DependencyInjection.Cache.Auth0Configuration})"/>.
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" />.</param>
-    /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientManagementConnection"/>.</returns>
+    /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="ManagementClient"/>.</returns>
     public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services)
     {
-        services.AddSingleton<IManagementApiClient, InjectableManagementApiClient>();
-
-        services.AddSingleton<IManagementConnection, HttpClientManagementConnection>(x =>
-        {
-            var factory = x.GetRequiredService<IHttpClientFactory>();
-            return new HttpClientManagementConnection(factory.CreateClient(ManagementHttpClientKey));
-        });
-        
-        return services.AddHttpClient(ManagementHttpClientKey)
+        var httpClientBuilder = services.AddHttpClient("Auth0ManagementApiClient")
 #if NET8_0
             .ConfigurePrimaryHttpMessageHandler(() =>
                 new SocketsHttpHandler()
@@ -136,6 +128,25 @@ public static class Auth0Extensions
             .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
 #endif
             ;
+        
+        services.AddSingleton<IManagementApiClient, ManagementClient>(serviceProvider =>
+        {
+            var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+            var httpClient = httpClientFactory.CreateClient("Auth0ManagementApiClient");
+            var config = serviceProvider.GetRequiredService<IOptions<Auth0Configuration>>();
+            var cache = serviceProvider.GetRequiredService<IAuth0TokenCache>();
+
+            var clientOptions = new ManagementClientOptions()
+            {
+                Domain = config.Value.Domain,
+                HttpClient = httpClient,
+                TokenProvider = new Auth0ManagementTokenProvider(cache)
+            };
+
+            return new ManagementClient(clientOptions);
+        });
+
+        return httpClientBuilder;
     }
 
     /// <summary>

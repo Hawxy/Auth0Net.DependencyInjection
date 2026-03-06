@@ -42,8 +42,8 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
 
             var tokenRequest = new ClientCredentialsTokenRequest
             {
-                ClientId = _config.ClientId,
-                ClientSecret = _config.ClientSecret,
+                ClientId = _config.ClientId!,
+                ClientSecret = _config.ClientSecret!,
                 Audience = audience
             };
 
