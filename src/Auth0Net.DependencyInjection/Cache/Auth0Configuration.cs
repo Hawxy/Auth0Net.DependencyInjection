@@ -6,7 +6,7 @@
 public sealed class Auth0Configuration
 {
     /// <summary>
-    /// The default or custom root domain for your Auth0 tenant. 
+    /// The default or custom root domain for your Auth0 tenant.
     /// </summary>
     public string Domain { get; set; } = null!;
     /// <summary>
@@ -22,11 +22,20 @@ public sealed class Auth0Configuration
 /// <summary>
 /// Configuration for the Auth0 Management API.
 /// </summary>
-public sealed class Auth0ManagementTokenConfiguration
+public sealed class Auth0ManagementClientConfiguration
 {
     /// <summary>
-    /// This option will replace the use of <see cref="Auth0Configuration.Domain"/> to compute the audience for the Management API token.
-    /// Useful when using custom domains.
+    /// Sets the audience for the Management API token. This is your default Auth0 domain within your tenant. 
     /// </summary>
     public string? Audience { get; set; }
+    
+    /// <summary>
+    /// Sets the max number of retries for the management client. Default is 2.
+    /// </summary>
+    public int? MaxRetries { get; set; }
+    
+    /// <summary>
+    /// Sets the timeout for the management client. Default is 30 seconds.
+    /// </summary>
+    public TimeSpan? Timeout { get; set; }
 }

@@ -182,13 +182,8 @@ public class ExtensionTests
 
         var defaultDomain = "tenant.au.auth0.com";
 
-        collection.AddAuth0ManagementClient()
-            .AddManagementAccessToken(c =>
-            {
-                c.Audience = defaultDomain;
-            });
-
-        collection.AddHttpClient<DummyClass>().AddManagementAccessToken();
+        collection.AddAuth0ManagementClient();
+        collection.AddHttpClient<DummyClass>();
 
         var services = collection.BuildServiceProvider();
 

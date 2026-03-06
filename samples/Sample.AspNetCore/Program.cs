@@ -41,7 +41,7 @@ builder.Services.AddAuth0AuthenticationClient(config =>
 });
 
 // Adds the ManagementApiClient with automatic injection of the management token based on the configuration set above.
-builder.Services.AddAuth0ManagementClient().AddManagementAccessToken();
+builder.Services.AddAuth0ManagementClient();
 
 builder.Services.AddGrpc();
 

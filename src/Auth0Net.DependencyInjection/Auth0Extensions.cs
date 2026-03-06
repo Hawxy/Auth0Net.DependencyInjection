@@ -116,7 +116,7 @@ public static class Auth0Extensions
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" />.</param>
     /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="ManagementClient"/>.</returns>
-    public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services)
+    public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services, Action<Auth0ManagementClientConfiguration, IServiceProvider>? config = null)
     {
         var httpClientBuilder = services.AddHttpClient("Auth0ManagementApiClient")
 #if NET8_0
@@ -128,19 +128,27 @@ public static class Auth0Extensions
             .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
 #endif
             ;
+
+        var optionsBuilder = services.AddOptions<Auth0ManagementClientConfiguration>();
+        
+        if(config != null)
+            optionsBuilder.Configure(config);
         
         services.AddSingleton<IManagementApiClient, ManagementClient>(serviceProvider =>
         {
             var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
             var httpClient = httpClientFactory.CreateClient("Auth0ManagementApiClient");
-            var config = serviceProvider.GetRequiredService<IOptions<Auth0Configuration>>();
+            var rootConfig = serviceProvider.GetRequiredService<IOptions<Auth0Configuration>>();
+            var managementConfig = serviceProvider.GetRequiredService<IOptions<Auth0ManagementClientConfiguration>>();
             var cache = serviceProvider.GetRequiredService<IAuth0TokenCache>();
 
             var clientOptions = new ManagementClientOptions()
             {
-                Domain = config.Value.Domain,
+                Domain = rootConfig.Value.Domain,
                 HttpClient = httpClient,
-                TokenProvider = new Auth0ManagementTokenProvider(cache)
+                TokenProvider = new Auth0ManagementTokenProvider(cache, UriHelpers.GetValidManagementUri(managementConfig.Value.Audience ?? rootConfig.Value.Domain).ToString()),
+                MaxRetries = managementConfig.Value.MaxRetries,
+                Timeout = managementConfig.Value.Timeout,
             };
 
             return new ManagementClient(clientOptions);
@@ -165,25 +173,5 @@ public static class Auth0Extensions
 
         return builder.AddHttpMessageHandler(provider =>
             new Auth0TokenHandler(provider.GetRequiredService<IAuth0TokenCache>(), c));
-    }
-
-    /// <summary>
-    /// Adds a <see cref="System.Net.Http.DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Management Access Token token to the Authorization header.
-    /// </summary>
-    /// <remarks>
-    /// The domain used to resolve the token is the same as set in <see cref="AddAuth0AuthenticationClient(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Auth0Net.DependencyInjection.Cache.Auth0Configuration})"/>, unless overriden.
-    /// </remarks>
-    /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure.</param>
-    /// <param name="config">Additional configuration for the management client for custom domain scenarios.</param>
-    /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClient"/>.</returns>
-    public static IHttpClientBuilder AddManagementAccessToken(this IHttpClientBuilder builder, Action<Auth0ManagementTokenConfiguration>? config = null)
-    {
-        var c = new Auth0ManagementTokenConfiguration();
-        config?.Invoke(c);
-
-        return builder.AddHttpMessageHandler(p =>
-            new Auth0ManagementTokenHandler(
-                p.GetRequiredService<IAuth0TokenCache>(),
-                p.GetRequiredService<IOptions<Auth0Configuration>>(), c));
     }
 }

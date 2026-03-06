@@ -64,9 +64,6 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
 
     /// <inheritdoc cref="IAuth0TokenCache"/>
     public ValueTask<string> GetTokenAsync(Uri audience, CancellationToken token = default) => GetTokenAsync(audience.ToString(), token);
-
-    /// <inheritdoc cref="IAuth0TokenCache"/>
-    public ValueTask<string> GetManagementTokenAsync(CancellationToken token = default) => GetTokenAsync(UriHelpers.GetValidManagementUri(_config.Domain), token);
 }
 
 internal static partial class Log
