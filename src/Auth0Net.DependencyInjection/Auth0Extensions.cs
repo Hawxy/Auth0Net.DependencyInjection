@@ -5,6 +5,7 @@ using Auth0Net.DependencyInjection.HttpClient;
 using Auth0Net.DependencyInjection.Injectables;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using IHttpClientFactory = System.Net.Http.IHttpClientFactory;
 
 namespace Auth0Net.DependencyInjection;
 
@@ -13,6 +14,8 @@ namespace Auth0Net.DependencyInjection;
 /// </summary>
 public static class Auth0Extensions
 {
+    
+    private const string ManagementHttpClientKey = nameof(ManagementHttpClientKey);
 
     /// <summary>
     /// Adds an <see cref="AuthenticationApiClient" /> integrated with <see cref="IHttpClientBuilder" />. 
@@ -117,7 +120,13 @@ public static class Auth0Extensions
     {
         services.AddSingleton<IManagementApiClient, InjectableManagementApiClient>();
 
-        return services.AddHttpClient<IManagementConnection, HttpClientManagementConnection>()
+        services.AddSingleton<IManagementConnection, HttpClientManagementConnection>(x =>
+        {
+            var factory = x.GetRequiredService<IHttpClientFactory>();
+            return new HttpClientManagementConnection(factory.CreateClient(ManagementHttpClientKey));
+        });
+        
+        return services.AddHttpClient(ManagementHttpClientKey)
 #if NET8_0
             .ConfigurePrimaryHttpMessageHandler(() =>
                 new SocketsHttpHandler()
@@ -130,7 +139,7 @@ public static class Auth0Extensions
     }
 
     /// <summary>
-    /// Adds a <see cref="DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Machine-to-Machine Access Token to the Authorization header.
+    /// Adds a <see cref="System.Net.Http.DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Machine-to-Machine Access Token to the Authorization header.
     /// </summary>
     /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure. </param>
     /// <param name="config">A delegate that is used to configure the instance of <see cref="Auth0TokenHandlerConfig" />.</param>
@@ -148,7 +157,7 @@ public static class Auth0Extensions
     }
 
     /// <summary>
-    /// Adds a <see cref="DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Management Access Token token to the Authorization header.
+    /// Adds a <see cref="System.Net.Http.DelegatingHandler"/> to the <see cref="IHttpClientBuilder"/> that will automatically add a Auth0 Management Access Token token to the Authorization header.
     /// </summary>
     /// <remarks>
     /// The domain used to resolve the token is the same as set in <see cref="AddAuth0AuthenticationClient(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Auth0Net.DependencyInjection.Cache.Auth0Configuration})"/>, unless overriden.
