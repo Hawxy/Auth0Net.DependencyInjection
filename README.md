@@ -34,10 +34,10 @@ dotnet add package Auth0Net.DependencyInjection
  
 ![Auth0Authentication](https://user-images.githubusercontent.com/975824/128319560-4b859296-44f5-4219-a1b3-8255bf29f1b3.png)
  
-If you're simply using the `AuthenticationApiClient` and nothing else, you can call `AddAuth0AuthenticationClientCore` and pass in your Auth0 Domain. This integration is lightweight and does not support any other features of this library. 
+If you're simply using the `AuthenticationApiClient` and nothing else, you can call `AddAuth0AuthenticationClient` and pass in your Auth0 Domain. This integration is lightweight and does not support any other features of this library. 
  
  ```csharp
-services.AddAuth0AuthenticationClientCore("your-auth0-domain.auth0.com");
+services.AddAuth0AuthenticationClient("your-auth0-domain.auth0.com");
 ```
 
 You can then request the `IAuthenticationApiClient` within your class:
@@ -70,10 +70,10 @@ services.AddAuth0AuthenticationClient(config =>
 });
 ```
 
-Add the `ManagementApiClient` with `AddAuth0ManagementClient()` and add the `DelegatingHandler` with `AddManagementAccessToken()` that will attach the Access Token automatically:
+Add the `ManagementApiClient` with `AddAuth0ManagementClient()`. The client will attach the Access Token automatically:
 
 ```csharp
-services.AddAuth0ManagementClient().AddManagementAccessToken();
+services.AddAuth0ManagementClient();
 ```
 
 Ensure your Machine-to-Machine application is authorized to request tokens from the Managment API and it has the correct scopes for the features you wish to use.
@@ -93,14 +93,14 @@ public class MyAuth0Service : IAuth0Service
  ```
  
  
- #### Handling Custom Domains
+#### Handling Custom Domains
 
-If you're using a custom domain with your Auth0 tenant, you may run into a problem whereby the `audience` of the Management API is being incorrectly set. You can override this via the `Audience` property:
+If you're using a custom domain with your Auth0 tenant, and it's being specified when calling `AddAuth0AuthenticationClient`, you will run into a problem whereby the `audience` of the Management API is being incorrectly set. You can override this via the `Audience` property:
 
 ```cs
-services.AddAuth0ManagementClient()
-    .AddManagementAccessToken(c =>
+services.AddAuth0ManagementClient(c =>
     {
+        // Set the audience to your default Auth0 domain.
         c.Audience = "my-tenant.au.auth0.com";
     });
 ```
@@ -109,7 +109,7 @@ services.AddAuth0ManagementClient()
 
 ![Auth0AuthenticationAll](https://user-images.githubusercontent.com/975824/128319653-418e0e72-2ddf-4d02-9544-1d60bd523321.png)
 
-**Note:** This feature relies on `services.AddAuth0AuthenticationClient(config => ...)` being called and configured as outlined in the previous scenario. 
+**Note:** This feature relies on `services.AddAuth0AuthenticationClient(config => ...)` being called and configured as outlined in the previous section. 
 
 This library includes a delegating handler - effectively middleware for your HttpClient - that will append an access token to all outbound requests. This is useful for calling other services that are protected by Auth0. This integration requires your service implementation to use `IHttpClientFactory` as part of its registration. You can read more about it [here](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests)
 
@@ -140,11 +140,12 @@ services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MySer
         .AddAccessToken(config => config.AudienceResolver = request => request.RequestUri.GetLeftPart(UriPartial.Authority));
 ```
 
-
 ### M2M Organizations Support
 
 This library includes support for [Machine-to-Machine (M2M) Access for Organizations](https://auth0.com/docs/manage-users/organizations/organizations-for-m2m-applications), including static and dynamic scenarios.
 This feature is important if your internal or third-party services expect a token to be scoped to a specific Auth0 organization.
+
+Your Auth0 org must have this functionality configured before
 
 #### Static Organization
 
@@ -162,7 +163,7 @@ builder.Services
 
 #### Dynamic Organization via Request Metadata
 
-If you already include org metadata as part of your network request or via the request options, you can choose to resolve the organization at runtime via the `OrganizationResolver`:
+If you already include org metadata as part of your network request or via the request options and would like to easily migrate to Org-scoped tokens, you can choose to resolve the organization at runtime via the `OrganizationResolver`:
 
 ```csharp
 builder.Services
@@ -179,33 +180,37 @@ builder.Services
 
 #### Dynamic Organization via Client Scope (Experimental)
 
-If your organization source is scoped to the usage of your service, such as an ASP.NET Core request, then you'll likely want the ability to freely set the Organization.
+If your organization source is scoped to the usage of your service, such as an ASP.NET Core request, then you'll want the ability to freely set the Organization.
 You can achieve this by injecting your client via `OrganizationScopeFactory<TClient>` and then creating an organization scope via `.CreateScope`:
 
-There's a few caveats if you're using this functionality, as it utilizes an `AsyncLocal` internally:
+```csharp
+// Inject the factory around your remote client
+private readonly OrganizationScopeFactory<UsersService> _scopeFactory;
+
+public QueryUsersService(OrganizationScopeFactory<UsersService> scopeFactory)
+{
+    _scopeFactory = scopeFactory;
+}
+
+public async Task CreateUserAsync(User user, string orgId)
+{
+    // Create the scope so the MTM token is generated with the current OrgId    
+    using var orgScope = _scopeFactory.CreateScope(orgId);
+    var userHttpClient = await orgScope.Client.CreateUser(user, stoppingToken);
+}
+  
+```
+
+There's a few limitations if you're using this functionality, as it uses `AsyncLocal` internally:
 
 - Never use multiple client scopes at the same time, either with the same or different client types.
 - Never call any other client that utilizes `.AddAccessToken` within a client scope.
 
-Doing any of the above is likely to result in the wrong Organization ID/Name being used for a given request.
+Doing any of the above is likely to result in hard to debug behaviour and may cause the wrong Organization ID/Name being used for a given request.
+
+This functionality is marked as experimental, and you must `#pragma warning disable AUTH0_EXPERIMENTAL` to use it. 
 
 ## Additional Functionality
-
-### Enhanced Resilience
-
-The default rate-limit behaviour in Auth0.NET is suboptimal, as it uses random backoff rather than reading the rate limit headers returned by Auth0.
-This package includes an additional `.AddAuth0RateLimitResilience()` extension that adds improved rate limit handling to the Auth0 clients.
-If you're running into rate limit failures, I highly recommend adding this functionality:
-
-```csharp
-services.AddAuth0ManagementClient()
-    .AddManagementAccessToken()
-    .AddAuth0RateLimitResilience();
-```
-
-When a retry occurs, you should see a warning log similar to:
-
-`Resilience event occurred. EventName: '"OnRetry"', Source: '"IManagementConnection-RateLimitRetry"/""/"Retry"', Operation Key: 'null', Result: '429'`
 
 ### Utility 
 
@@ -242,7 +247,18 @@ An additional 1% of lifetime is removed to protect against clock drift between d
 
 In some situations you might want to request an access token from Auth0 manually. You can achieve this by injecting `IAuth0TokenCache` into a class and calling `GetTokenAsync` with the audience of the API you're requesting the token for.
 
-An in-memory-only instance of [FusionCache](https://github.com/ZiggyCreatures/FusionCache) is used as the caching implementation. This instance is _named_ and will not impact other usages of FusionCache.
+An in-memory-only instance of [FusionCache](https://github.com/ZiggyCreatures/FusionCache) is used as the caching implementation. This instance is _named_ and will not impact other usages of FusionCache. 
+
+If you want to use your own implementation of FusionCache, specify `FusionCacheInstance` when configurating the authentication client:
+
+```csharp
+services.AddAuth0AuthenticationClient(x =>
+ {
+     //...
+     // Use the default FusionCache instance registered via `.AddFusionCache()`
+     x.FusionCacheInstance = FusionCacheOptions.DefaultCacheName
+ });
+```
 
 ## Disclaimer
 

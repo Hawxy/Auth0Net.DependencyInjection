@@ -54,6 +54,13 @@ app.MapGrpcService<UsersService>();
 
 app.MapGet("/users", async ([FromServices] IManagementApiClient client, HttpContext context, ILogger<Program> logger) =>
 {
+    var user = await client.Users.ListAsync(new ListUsersRequestParameters() { });
+
+    return user.CurrentPage.Select(x => new Sample.AspNetCore.User(x.UserId, x.Name, x.Email)).ToArray();
+});
+
+app.MapGet("/users/org-scoped", async ([FromServices] IManagementApiClient client, HttpContext context, ILogger<Program> logger) =>
+{
     var orgId = context.User.FindFirstValue("org_id");
     if (!string.IsNullOrEmpty(orgId)) {
         logger.LogInformation("Found org {org}", orgId);

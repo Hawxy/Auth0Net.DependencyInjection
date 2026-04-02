@@ -147,7 +147,7 @@ public class CacheTests
 
     private sealed class CapturingFusionCacheProvider : IFusionCacheProvider
     {
-        public string? LastRequestedCacheName { get; private set; }
+        public string LastRequestedCacheName { get; private set; }
 
         public IFusionCache GetCache(string cacheName)
         {
