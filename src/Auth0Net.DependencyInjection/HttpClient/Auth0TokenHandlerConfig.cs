@@ -20,17 +20,5 @@ public sealed class Auth0TokenHandlerConfig
     /// A value set in <see cref="Audience"/> will take precedence over any resolver set here - be careful not to mix the two.
     /// </remarks>
     public Func<HttpRequestMessage, string>? AudienceResolver { get; set; }
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="Auth0TokenHandlerConfig"/> with no Audience set.
-    /// </summary>
-    public Auth0TokenHandlerConfig() { }
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="Auth0TokenHandlerConfig"/>.
-    /// </summary>
-    public Auth0TokenHandlerConfig(string audience)
-    {
-        Audience = audience;
-    }
+    
 }
