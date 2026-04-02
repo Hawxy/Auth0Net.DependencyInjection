@@ -157,7 +157,8 @@ public class CacheTests
 
         public IFusionCache GetCacheOrNull(string cacheName)
         {
-            throw new NotImplementedException();
+            LastRequestedCacheName = cacheName;
+            return new FusionCache(new FusionCacheOptions());
         }
     }
 }
