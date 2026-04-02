@@ -52,7 +52,7 @@ app.UseAuthorization();
 
 app.MapGrpcService<UsersService>();
 
-app.MapGet("/users", async ([FromServices] IManagementApiClient client, HttpContext context, ILogger<Program> logger) =>
+app.MapGet("/users", async ([FromServices] IManagementApiClient client) =>
 {
     var user = await client.Users.ListAsync(new ListUsersRequestParameters() { });
 
