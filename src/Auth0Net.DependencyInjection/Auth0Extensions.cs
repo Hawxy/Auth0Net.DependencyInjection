@@ -13,8 +13,6 @@ namespace Auth0Net.DependencyInjection;
 /// </summary>
 public static class Auth0Extensions
 {
-    
-    private const string ManagementHttpClientKey = nameof(ManagementHttpClientKey);
 
     /// <summary>
     /// Adds an <see cref="AuthenticationApiClient" /> integrated with <see cref="IHttpClientBuilder" />. 
@@ -25,7 +23,7 @@ public static class Auth0Extensions
     /// <param name="services">The <see cref="IServiceCollection" />.</param>
     /// <param name="domain">The root domain for your Auth0 tenant.</param>
     /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="HttpClientAuthenticationConnection"/>.</returns>
-    public static IHttpClientBuilder AddAuth0AuthenticationClientCore(this IServiceCollection services, string domain)
+    public static IHttpClientBuilder AddAuth0AuthenticationClient(this IServiceCollection services, string domain)
     {
         if (services.Any(x => x.ServiceType == typeof(IAuthenticationApiClient)))
             throw new InvalidOperationException("AuthenticationApiClient has already been registered!");

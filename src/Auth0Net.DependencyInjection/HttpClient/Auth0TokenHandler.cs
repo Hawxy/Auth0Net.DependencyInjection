@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace Auth0Net.DependencyInjection.HttpClient;
 
 /// <summary>
-/// A <see cref="DelegatingHandler"/> that adds a authentication header with a Auth0-generated JWT token for the given audience.
+/// A <see cref="DelegatingHandler"/> that adds an authentication header with an Auth0-generated JWT token for the given audience.
 /// </summary>
 public class Auth0TokenHandler : DelegatingHandler
 {
