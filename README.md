@@ -145,7 +145,7 @@ services.AddHttpClient<MyHttpService>(x=> x.BaseAddress = new Uri("https://MySer
 This library includes support for [Machine-to-Machine (M2M) Access for Organizations](https://auth0.com/docs/manage-users/organizations/organizations-for-m2m-applications), including static and dynamic scenarios.
 This feature is important if your internal or third-party services expect a token to be scoped to a specific Auth0 organization.
 
-Your Auth0 org must have this functionality configured before
+Orgs support must be enabled for your combination of client/api/org(s) before usage.
 
 #### Static Organization
 
