@@ -1,8 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using Auth0.ManagementApi;
-using Auth0.ManagementApi.Models;
-using Auth0.ManagementApi.Paging;
+﻿using Auth0.ManagementApi;
 using Grpc.Core;
 using User;
 
@@ -18,13 +14,13 @@ public class UsersService : UserService.UserServiceBase
 
     public override async Task<UserResponse> GetUser(UserRequest request, ServerCallContext context)
     {
-        var users = await _client.Users.GetAllAsync(new GetUsersRequest(), new PaginationInfo());
+        var users = await _client.Users.ListAsync(new ListUsersRequestParameters() { PerPage = 10});
 
         return new UserResponse
         {
             Users =
             {
-                users.Select(x=> new UserDto {UserId = x.UserId, Email = x.Email, FullName = x.FullName})
+                users.CurrentPage.Select(x=> new UserDto {UserId = x.UserId, Email = x.Email, FullName = x.Name})
             }
         };
     }

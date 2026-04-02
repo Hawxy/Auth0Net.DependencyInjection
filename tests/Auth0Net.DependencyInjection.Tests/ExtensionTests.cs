@@ -16,7 +16,7 @@ public class ExtensionTests
     [Fact]
     public void AddAuth0AuthenticationClientCore_Throws_OnInvalidDomain()
     {
-        var services = new ServiceCollection().AddAuth0AuthenticationClientCore("").Services.BuildServiceProvider();
+        var services = new ServiceCollection().AddAuth0AuthenticationClient("").Services.BuildServiceProvider();
 
         Assert.Throws<OptionsValidationException>(() => services.GetRequiredService<IAuthenticationApiClient>());
     }
@@ -31,7 +31,7 @@ public class ExtensionTests
             x.ClientSecret = "";
         }).Services;
 
-        Assert.Throws<InvalidOperationException>(() => services.AddAuth0AuthenticationClientCore("test-url.au.auth0.com"));
+        Assert.Throws<InvalidOperationException>(() => services.AddAuth0AuthenticationClient("test-url.au.auth0.com"));
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class ExtensionTests
     {
         var domain = "test-url.au.auth0.com";
 
-        var services = new ServiceCollection().AddAuth0AuthenticationClientCore(domain).Services;
+        var services = new ServiceCollection().AddAuth0AuthenticationClient(domain).Services;
 
         var serviceDescriptor = services.FirstOrDefault(x => x.ServiceType == typeof(IAuthenticationApiClient)
                                                              && x.ImplementationType == typeof(InjectableAuthenticationApiClient));
@@ -64,7 +64,7 @@ public class ExtensionTests
     [Fact]
     public void AddAuth0AuthenticationClient_Throws_AuthenticationClientAlreadyRegistered()
     {
-        var services = new ServiceCollection().AddAuth0AuthenticationClientCore("").Services;
+        var services = new ServiceCollection().AddAuth0AuthenticationClient("").Services;
 
         Assert.Throws<InvalidOperationException>(() => services.AddAuth0AuthenticationClient(x =>
         {
@@ -182,13 +182,8 @@ public class ExtensionTests
 
         var defaultDomain = "tenant.au.auth0.com";
 
-        collection.AddAuth0ManagementClient()
-            .AddManagementAccessToken(c =>
-            {
-                c.Audience = defaultDomain;
-            });
-
-        collection.AddHttpClient<DummyClass>().AddManagementAccessToken();
+        collection.AddAuth0ManagementClient();
+        collection.AddHttpClient<DummyClass>();
 
         var services = collection.BuildServiceProvider();
 

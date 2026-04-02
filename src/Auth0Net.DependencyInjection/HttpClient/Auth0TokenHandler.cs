@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace Auth0Net.DependencyInjection.HttpClient;
 
 /// <summary>
-/// A <see cref="DelegatingHandler"/> that adds a authentication header with a Auth0-generated JWT token for the given audience.
+/// A <see cref="DelegatingHandler"/> that adds an authentication header with an Auth0-generated JWT token for the given audience.
 /// </summary>
 public class Auth0TokenHandler : DelegatingHandler
 {
@@ -32,13 +32,5 @@ public class Auth0TokenHandler : DelegatingHandler
 
         request.Headers.Authorization = new AuthenticationHeaderValue(Scheme, await _cache.GetTokenAsync(audience, cancellationToken));
         return await base.SendAsync(request, cancellationToken);
-    }
-}
-
-internal sealed class Auth0ManagementTokenHandler : Auth0TokenHandler
-{
-    public Auth0ManagementTokenHandler(IAuth0TokenCache cache, IOptions<Auth0Configuration> options, Auth0ManagementTokenConfiguration clientConfig) 
-        : base(cache, new Auth0TokenHandlerConfig(UriHelpers.GetValidManagementUri(clientConfig.Audience ?? options.Value.Domain).ToString()))
-    {
     }
 }

@@ -1,6 +1,4 @@
 using Auth0.ManagementApi;
-using Auth0.ManagementApi.Models;
-using Auth0.ManagementApi.Paging;
 using Auth0Net.DependencyInjection;
 using Auth0Net.DependencyInjection.HttpClient;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -43,7 +41,7 @@ builder.Services.AddAuth0AuthenticationClient(config =>
 });
 
 // Adds the ManagementApiClient with automatic injection of the management token based on the configuration set above.
-builder.Services.AddAuth0ManagementClient().AddManagementAccessToken();
+builder.Services.AddAuth0ManagementClient();
 
 builder.Services.AddGrpc();
 
@@ -56,9 +54,9 @@ app.MapGrpcService<UsersService>();
 
 app.MapGet("/users", async ([FromServices] IManagementApiClient client) =>
 {
-    var user = await client.Users.GetAllAsync(new GetUsersRequest(), new PaginationInfo());
+    var user = await client.Users.ListAsync(new ListUsersRequestParameters() { });
 
-    return user.Select(x => new Sample.AspNetCore.User(x.UserId, x.FullName, x.Email)).ToArray();
+    return user.CurrentPage.Select(x => new Sample.AspNetCore.User(x.UserId, x.Name, x.Email)).ToArray();
 });
 
 
