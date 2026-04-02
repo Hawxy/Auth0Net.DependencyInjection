@@ -1,11 +1,10 @@
 using Auth0.AuthenticationApi;
 using Auth0.ManagementApi;
 using Auth0Net.DependencyInjection.Cache;
+using Auth0Net.DependencyInjection.Factory;
 using Auth0Net.DependencyInjection.HttpClient;
 using Auth0Net.DependencyInjection.Injectables;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using IHttpClientFactory = System.Net.Http.IHttpClientFactory;
 
 namespace Auth0Net.DependencyInjection;
 
@@ -105,9 +104,7 @@ public static class Auth0Extensions
             ;
 
     }
-
-
-
+    
     /// <summary>
     /// Adds a <see cref="ManagementApiClient" /> integrated with <see cref="IHttpClientBuilder" /> to the <see cref="IServiceCollection" />.
     /// </summary>
@@ -118,7 +115,7 @@ public static class Auth0Extensions
     /// <returns>An <see cref="IHttpClientBuilder" /> that can be used to configure the <see cref="ManagementClient"/>.</returns>
     public static IHttpClientBuilder AddAuth0ManagementClient(this IServiceCollection services, Action<Auth0ManagementClientConfiguration, IServiceProvider>? config = null)
     {
-        var httpClientBuilder = services.AddHttpClient("Auth0ManagementApiClient")
+        var httpClientBuilder = services.AddHttpClient(ManagementClientFactory.Auth0ManagementApiClient)
 #if NET8_0
             .ConfigurePrimaryHttpMessageHandler(() =>
                 new SocketsHttpHandler()
@@ -133,26 +130,10 @@ public static class Auth0Extensions
         
         if(config != null)
             optionsBuilder.Configure(config);
+
+        services.AddSingleton<ManagementClientFactory>();
         
-        services.AddSingleton<IManagementApiClient, ManagementClient>(serviceProvider =>
-        {
-            var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-            var httpClient = httpClientFactory.CreateClient("Auth0ManagementApiClient");
-            var rootConfig = serviceProvider.GetRequiredService<IOptions<Auth0Configuration>>();
-            var managementConfig = serviceProvider.GetRequiredService<IOptions<Auth0ManagementClientConfiguration>>();
-            var cache = serviceProvider.GetRequiredService<IAuth0TokenCache>();
-
-            var clientOptions = new ManagementClientOptions()
-            {
-                Domain = rootConfig.Value.Domain,
-                HttpClient = httpClient,
-                TokenProvider = new Auth0ManagementTokenProvider(cache, UriHelpers.GetValidManagementUri(managementConfig.Value.Audience ?? rootConfig.Value.Domain).ToString()),
-                MaxRetries = managementConfig.Value.MaxRetries,
-                Timeout = managementConfig.Value.Timeout,
-            };
-
-            return new ManagementClient(clientOptions);
-        });
+        services.AddSingleton<IManagementApiClient>(sp => sp.GetRequiredService<ManagementClientFactory>().Create());
 
         return httpClientBuilder;
     }

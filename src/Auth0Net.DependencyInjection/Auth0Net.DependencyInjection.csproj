@@ -21,16 +21,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Auth0.AuthenticationApi" Version="7.45.0" />
-    <PackageReference Include="Auth0.ManagementApi" Version="8.0.0-beta.1" />
+    <PackageReference Include="Auth0.AuthenticationApi" Version="7.45.1" />
+    <PackageReference Include="Auth0.ManagementApi" Version="8.0.0" />
     <PackageReference Include="DotNet.ReproducibleBuilds" Version="2.0.2" PrivateAssets="All" />
-    <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.5.0" />
+    <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.6.0" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.1" />
-    <PackageReference Include="Polyfill" Version="9.18.0" PrivateAssets="all" />
+    <PackageReference Include="Polyfill" Version="9.23.0" PrivateAssets="all" />
   </ItemGroup>
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">

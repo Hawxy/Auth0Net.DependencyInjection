@@ -1,4 +1,6 @@
-﻿namespace Auth0Net.DependencyInjection.Cache;
+﻿using ZiggyCreatures.Caching.Fusion;
+
+namespace Auth0Net.DependencyInjection.Cache;
 
 /// <summary>
 /// Configuration for the Auth0 Clients and Auth0 Token Cache.
@@ -17,6 +19,14 @@ public sealed class Auth0Configuration
     /// The Client Secret of the Auth0 Machine-to-Machine application.
     /// </summary>
     public string? ClientSecret { get; set; }
+    
+    /// <summary>
+    /// This package uses FusionCache internally for token caching.
+    /// If you have an existing FusionCache configuration you'd like to use (ie one setup with a distributed cache), pass the name of it here.
+    /// For the default FusionCache instance registered with ".AddFusionCache()", use <see cref="FusionCacheOptions.DefaultCacheName"/>
+    /// </summary>
+    public string? FusionCacheInstance { get; set; }
+    
 }
 
 /// <summary>
@@ -25,7 +35,7 @@ public sealed class Auth0Configuration
 public sealed class Auth0ManagementClientConfiguration
 {
     /// <summary>
-    /// Sets the audience for the Management API token. This is your default Auth0 domain within your tenant. 
+    /// Sets the audience for the Management API token. This is your default Auth0 domain within your tenant and should be set if you're using a custom domain.
     /// </summary>
     public string? Audience { get; set; }
     
