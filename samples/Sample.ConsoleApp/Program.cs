@@ -27,10 +27,6 @@ builder.Services
     .AddAccessToken(config =>
     {
         config.Audience = builder.Configuration["AspNetCore:Audience"];
-        config.OrganizationResolver = x =>
-            x.Headers.TryGetValues("org-id", out var values) 
-                ? values.SingleOrDefault() 
-                : null;
     });
 
 

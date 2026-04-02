@@ -33,10 +33,7 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
         _logger = logger;
         _config = config.Value;
     }
-
-    /// <inheritdoc cref="IAuth0TokenCache"/>
-    public ValueTask<string> GetTokenAsync(string audience, CancellationToken token = default) => GetTokenAsync(audience, null, token);
-
+    
     /// <inheritdoc cref="IAuth0TokenCache"/>
     public async ValueTask<string> GetTokenAsync(string audience, string? organization = null, CancellationToken token = default)
     {
@@ -72,6 +69,9 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
             return response.AccessToken;
         }, token: token))!;
     }
+    
+    /// <inheritdoc cref="IAuth0TokenCache"/>
+    public ValueTask<string> GetTokenAsync(string audience, CancellationToken token = default) => GetTokenAsync(audience, null, token);
 
     /// <inheritdoc cref="IAuth0TokenCache"/>
     public ValueTask<string> GetTokenAsync(Uri audience, CancellationToken token = default) => GetTokenAsync(audience.ToString(), token);
