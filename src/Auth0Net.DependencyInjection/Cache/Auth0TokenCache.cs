@@ -18,7 +18,7 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
 
     private const double TokenExpiryBuffer = 0.01d;
     
-    private static string Key(string audience) => $"{nameof(Auth0TokenCache)}-{audience}";
+    private static string Key(string audience, string? organization) => string.IsNullOrEmpty(organization) ? $"{nameof(Auth0TokenCache)}-{audience}" : $"{nameof(Auth0TokenCache)}-{audience}-{organization}";
 
     /// <summary>
     /// An implementation of <see cref="IAuth0TokenCache"/> that caches and renews Auth0 Access Tokens
@@ -40,7 +40,7 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
     {
         _logger.TokenRequested(audience);
 
-        return (await _cache.GetOrSetAsync<string>(Key(audience), async (config, ct) =>
+        return (await _cache.GetOrSetAsync<string>(Key(audience, organization), async (config, ct) =>
         {
             _logger.CacheFetch(audience);
 

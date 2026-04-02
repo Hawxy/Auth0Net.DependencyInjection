@@ -196,7 +196,7 @@ public async Task CreateUserAsync(User user, string orgId)
 {
     // Create the scope so the MTM token is generated with the current OrgId    
     using var orgScope = _scopeFactory.CreateScope(orgId);
-    var userHttpClient = await orgScope.Client.CreateUser(user, stoppingToken);
+    await orgScope.Client.CreateUser(user, stoppingToken);
 }
   
 ```
