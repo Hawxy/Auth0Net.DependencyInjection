@@ -48,6 +48,13 @@ public class OrganizationScopeFactory<TClient> where TClient: class
     /// </returns>
     public OrganizationScope<TClient> CreateScope(string organization)
     {
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(organization);
+#endif
+        if (!string.IsNullOrEmpty(_accessor.Organization))
+            throw new InvalidOperationException(
+                "Attempted to create a nested organization scope. This is unsupported. Please open an issue if you'd find this useful.");
+        
         _accessor.Organization = organization;
         return new OrganizationScope<TClient>(_client, _accessor);
     }

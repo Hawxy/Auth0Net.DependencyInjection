@@ -201,12 +201,14 @@ public async Task CreateUserAsync(User user, string orgId)
   
 ```
 
+ALWAYS ensure you dispose of the scope when finished.
+
 There's a few limitations if you're using this functionality, as it uses `AsyncLocal` internally:
 
-- Never use multiple client scopes at the same time, either with the same or different client types.
-- Never call any other client that utilizes `.AddAccessToken` within a client scope.
+- Never use multiple client scopes at the same time, either with the same or different client types. This will throw an exception.
+- Never call any other client that utilizes `.AddAccessToken` within a client scope. This may cause the wrong Organization ID/Name being used for a given request.
 
-Doing any of the above is likely to result in hard to debug behaviour and may cause the wrong Organization ID/Name being used for a given request.
+If you have a use-case for either of these items, please open an issue with an example.
 
 This functionality is marked as experimental, and you must `#pragma warning disable AUTH0_EXPERIMENTAL` to use it. 
 
