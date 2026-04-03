@@ -152,11 +152,11 @@ Clients that simply require a single organization for a specific client can do s
 
 ```csharp
 builder.Services
-    .AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(builder.Configuration["AspNetCore:Url"]!))
+    .AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(builder.Configuration["MyApi:Url"]!))
     .AddAccessToken(config =>
     {
-        config.Audience = builder.Configuration["AspNetCore:Audience"];
-        config.Organization = builder.Configuration["AspNetCore:Audience"];
+        config.Audience = builder.Configuration["MyApi:Audience"];
+        config.Organization = builder.Configuration["MyApi:Organization"];
     });
 ```
 
@@ -166,10 +166,10 @@ If you already include org metadata as part of your network request or via the r
 
 ```csharp
 builder.Services
-    .AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(builder.Configuration["AspNetCore:Url"]!))
+    .AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(builder.Configuration["MyApi:Url"]!))
     .AddAccessToken(config =>
     {
-        config.Audience = builder.Configuration["AspNetCore:Audience"];
+        config.Audience = builder.Configuration["MyApi:Audience"];
         config.OrganizationResolver = x =>
             x.Headers.TryGetValues("org-id", out var values) 
                 ? values.SingleOrDefault() 
