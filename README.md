@@ -81,7 +81,6 @@ Ensure your Machine-to-Machine application is authorized to request tokens from 
 You can then request the `IManagementApiClient` (or `IAuthenticationApiClient`) within your services:
 
 ```csharp
-
 public class MyAuth0Service : IAuth0Service
 {
     private readonly IManagementApiClient _managementApiClient;
@@ -218,7 +217,7 @@ This functionality is marked as experimental, and you must `#pragma warning disa
 
 This library exposes a simple string extension, `ToHttpsUrl()`, that can be used to format the naked Auth0 domain sitting in your configuration into a proper URL.
 
-This is identical to `https://{Configuration["Auth0:Domain"]}/` that you usually end up writing _somewhere_ in your `Startup.cs`.
+This is identical to `https://{Configuration["Auth0:Domain"]}/` that you usually end up writing _somewhere_ in your `Program.cs`.
 
 For example, formatting the domain for the JWT Authority:
 
@@ -239,7 +238,7 @@ Both the authentication and authorization clients are registered as singletons a
 
 ### Samples
 
-Both a .NET Generic Host and ASP.NET Core example are available in the [samples](https://github.com/Hawxy/Auth0Net.DependencyInjection/tree/main/samples) directory.
+Both a .NET Generic Host and ASP.NET Core examples are available in the [samples](https://github.com/Hawxy/Auth0Net.DependencyInjection/tree/main/samples) directory.
 
 ### Internal Cache
 
