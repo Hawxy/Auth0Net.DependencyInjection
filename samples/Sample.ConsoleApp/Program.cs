@@ -24,7 +24,10 @@ builder.Services
 // Works for the Grpc integration too!
 builder.Services
     .AddGrpcClient<UserService.UserServiceClient>(x => x.Address = new Uri(builder.Configuration["AspNetCore:Url"]!))
-    .AddAccessToken(config => config.Audience = builder.Configuration["AspNetCore:Audience"]);
+    .AddAccessToken(config =>
+    {
+        config.Audience = builder.Configuration["AspNetCore:Audience"];
+    });
 
 
 builder.Services.AddHostedService<PumpingBackgroundService>();

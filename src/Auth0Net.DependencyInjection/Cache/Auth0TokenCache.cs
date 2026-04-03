@@ -18,7 +18,7 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
 
     private const double TokenExpiryBuffer = 0.01d;
     
-    private static string Key(string audience) => $"{nameof(Auth0TokenCache)}-{audience}";
+    private static string Key(string audience, string? organization) => string.IsNullOrEmpty(organization) ? $"{nameof(Auth0TokenCache)}-{audience}" : $"{nameof(Auth0TokenCache)}-{audience}-{organization}";
 
     /// <summary>
     /// An implementation of <see cref="IAuth0TokenCache"/> that caches and renews Auth0 Access Tokens
@@ -26,20 +26,21 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
     public Auth0TokenCache(IAuthenticationApiClient client, IFusionCacheProvider provider, ILogger<Auth0TokenCache> logger, IOptions<Auth0Configuration> config)
     {
         _client = client;
-        _cache = !string.IsNullOrEmpty(config.Value.FusionCacheInstance) 
-            ? provider.GetCache(config.Value.FusionCacheInstance) 
+        var cache = !string.IsNullOrEmpty(config.Value.FusionCacheInstance) 
+            ? provider.GetCacheOrNull(config.Value.FusionCacheInstance) 
             : provider.GetCache(Constants.FusionCacheInstance);
-        
+
+        _cache = cache ?? throw new InvalidOperationException($"Unable to resolve requested FusionCache instance: {config.Value.FusionCacheInstance}. Did you specify the right name?");
         _logger = logger;
         _config = config.Value;
     }
-
+    
     /// <inheritdoc cref="IAuth0TokenCache"/>
-    public async ValueTask<string> GetTokenAsync(string audience, CancellationToken token = default)
+    public async ValueTask<string> GetTokenAsync(string audience, string? organization = null, CancellationToken token = default)
     {
         _logger.TokenRequested(audience);
 
-        return (await _cache.GetOrSetAsync<string>(Key(audience), async (config, ct) =>
+        return (await _cache.GetOrSetAsync<string>(Key(audience, organization), async (config, ct) =>
         {
             _logger.CacheFetch(audience);
 
@@ -50,6 +51,11 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
                 Audience = audience
             };
 
+            if (!string.IsNullOrEmpty(organization))
+            {
+                tokenRequest.Organization = organization;
+            }   
+            
             var response = await _client.GetTokenAsync(tokenRequest, ct);
 
             var computedExpiry = Math.Ceiling(response.ExpiresIn - response.ExpiresIn * TokenExpiryBuffer);
@@ -64,6 +70,9 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
             return response.AccessToken;
         }, token: token))!;
     }
+    
+    /// <inheritdoc cref="IAuth0TokenCache"/>
+    public ValueTask<string> GetTokenAsync(string audience, CancellationToken token = default) => GetTokenAsync(audience, null, token);
 
     /// <inheritdoc cref="IAuth0TokenCache"/>
     public ValueTask<string> GetTokenAsync(Uri audience, CancellationToken token = default) => GetTokenAsync(audience.ToString(), token);

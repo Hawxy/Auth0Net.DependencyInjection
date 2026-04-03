@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Auth0.ManagementApi;
 using Auth0Net.DependencyInjection;
 using Auth0Net.DependencyInjection.HttpClient;
@@ -9,14 +10,13 @@ using Sample.AspNetCore.Protos;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// An extension method is included to convert a naked auth0 domain (my-tenant.auth0.au.com) to the correct format (https://my-tenant-auth0.au.com/)
-string domain = builder.Configuration["Auth0:Domain"]!.ToHttpsUrl();
+var domain = builder.Configuration["Auth0:Domain"];
 
 // Protect your API with authentication as you normally would
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = domain;
+        options.Authority = domain!.ToHttpsUrl();
         options.Audience = builder.Configuration["Auth0:Audience"];
     });
 
@@ -35,7 +35,7 @@ builder.Services.AddAuthorization(options =>
 // Adds the AuthenticationApiClient client and provides configuration to be consumed by the management client, token cache, and IHttpClientBuilder integrations
 builder.Services.AddAuth0AuthenticationClient(config =>
 {
-    config.Domain = domain;
+    config.Domain = domain!;
     config.ClientId = builder.Configuration["Auth0:ClientId"];
     config.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
 });
@@ -54,6 +54,17 @@ app.MapGrpcService<UsersService>();
 
 app.MapGet("/users", async ([FromServices] IManagementApiClient client) =>
 {
+    var user = await client.Users.ListAsync(new ListUsersRequestParameters() { });
+
+    return user.CurrentPage.Select(x => new Sample.AspNetCore.User(x.UserId, x.Name, x.Email)).ToArray();
+});
+
+app.MapGet("/users/org-scoped", async ([FromServices] IManagementApiClient client, HttpContext context, ILogger<Program> logger) =>
+{
+    var orgId = context.User.FindFirstValue("org_id");
+    if (!string.IsNullOrEmpty(orgId)) {
+        logger.LogInformation("Found org {org}", orgId);
+    }
     var user = await client.Users.ListAsync(new ListUsersRequestParameters() { });
 
     return user.CurrentPage.Select(x => new Sample.AspNetCore.User(x.UserId, x.Name, x.Email)).ToArray();

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Auth0.AuthenticationApi;
@@ -59,9 +59,69 @@ public class CacheTests
 
         A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored))
             .MustHaveHappenedTwiceExactly();
-        
     }
 
+    
+    [Fact]
+    public async Task Cache_WhenGivenOrgId_PassesOrgIdToTokenRequest()
+    {
+        const string orgId = "org_123456";
+
+        var config = A.Fake<IOptionsSnapshot<Auth0Configuration>>();
+        A.CallTo(() => config.Value).Returns(new Auth0Configuration
+        {
+            ClientId = Guid.NewGuid().ToString(),
+            ClientSecret = Guid.NewGuid().ToString(),
+            Domain = "https://hawxy.au.auth0.com/",
+        });
+
+        var authClient = A.Fake<IAuthenticationApiClient>();
+        A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored))
+            .Returns(new AccessTokenResponse { AccessToken = "token", ExpiresIn = 60 });
+
+        var cache = new Auth0TokenCache(authClient, new FusionCacheTestProvider(), new NullLogger<Auth0TokenCache>(), config);
+
+        await cache.GetTokenAsync("api://my-audience", orgId, TestContext.Current.CancellationToken);
+
+        A.CallTo(() => authClient.GetTokenAsync(
+                A<ClientCredentialsTokenRequest>.That.Matches(r => r.Organization == orgId),
+                A<CancellationToken>.Ignored))
+            .MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task Cache_DifferentOrganizations_ResultInSeparateCacheEntries()
+    {
+        var config = A.Fake<IOptionsSnapshot<Auth0Configuration>>();
+        A.CallTo(() => config.Value).Returns(new Auth0Configuration
+        {
+            ClientId = Guid.NewGuid().ToString(),
+            ClientSecret = Guid.NewGuid().ToString(),
+            Domain = "https://hawxy.au.auth0.com/",
+        });
+
+        var authClient = A.Fake<IAuthenticationApiClient>();
+        A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored))
+            .Returns(new AccessTokenResponse { AccessToken = "token", ExpiresIn = 300 });
+
+        var cache = new Auth0TokenCache(authClient, new FusionCacheTestProvider(), new NullLogger<Auth0TokenCache>(), config);
+
+        const string audience = "api://my-audience";
+
+        // First call for org_a - should hit the auth client
+        await cache.GetTokenAsync(audience, "org_a", TestContext.Current.CancellationToken);
+        // Second call for org_a - should be served from cache
+        await cache.GetTokenAsync(audience, "org_a", TestContext.Current.CancellationToken);
+
+        // First call for org_b - different org, should hit the auth client again
+        await cache.GetTokenAsync(audience, "org_b", TestContext.Current.CancellationToken);
+        // Second call for org_b - should be served from cache
+        await cache.GetTokenAsync(audience, "org_b", TestContext.Current.CancellationToken);
+
+        // Auth client should have been called exactly twice - once per unique org
+        A.CallTo(() => authClient.GetTokenAsync(A<ClientCredentialsTokenRequest>.Ignored, A<CancellationToken>.Ignored))
+            .MustHaveHappened(2, Times.Exactly);
+    }
 
     [Fact]
     public async Task Cache_UsesFusionCacheInstance_WhenConfigured()
@@ -121,7 +181,7 @@ public class CacheTests
 
     private sealed class CapturingFusionCacheProvider : IFusionCacheProvider
     {
-        public string? LastRequestedCacheName { get; private set; }
+        public string LastRequestedCacheName { get; private set; }
 
         public IFusionCache GetCache(string cacheName)
         {
@@ -131,7 +191,8 @@ public class CacheTests
 
         public IFusionCache GetCacheOrNull(string cacheName)
         {
-            throw new NotImplementedException();
+            LastRequestedCacheName = cacheName;
+            return new FusionCache(new FusionCacheOptions());
         }
     }
 }
