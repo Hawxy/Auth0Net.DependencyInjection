@@ -20,7 +20,7 @@ This library hopes to solve that problem, featuring:
  
  This library is compatible with .NET 8+ as well as .NET Framework 4.8 and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
 
-#### NOTE: For Auth0.NET v7 users, use v5 of this package. Only update to v6 if you want to use Auth0.NET v8 and take on the breaking changes.
+#### NOTE: For Auth0.NET v7 users, use [v5 of this package](https://github.com/Hawxy/Auth0Net.DependencyInjection/tree/v5.2.1). Only update to v6 if you want to use Auth0.NET v8 and take on the breaking changes.
 
  
  ## Install
