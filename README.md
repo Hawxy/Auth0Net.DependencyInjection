@@ -19,6 +19,9 @@ This library hopes to solve that problem, featuring:
  :white_check_mark: `IHttpClientBuilder` extensions, providing handlers to automatically append access tokens to outgoing requests.
  
  This library is compatible with .NET 8+ as well as .NET Framework 4.8 and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
+
+#### NOTE: For Auth0.NET v7 users, use v5 of this package. Only update to v6 if you want to use Auth0.NET v8 and take on the breaking changes.
+
  
  ## Install
  
