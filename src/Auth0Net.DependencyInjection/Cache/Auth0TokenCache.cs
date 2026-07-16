@@ -26,11 +26,10 @@ public sealed class Auth0TokenCache : IAuth0TokenCache
     public Auth0TokenCache(IAuthenticationApiClient client, IFusionCacheProvider provider, ILogger<Auth0TokenCache> logger, IOptions<Auth0Configuration> config)
     {
         _client = client;
-        var cache = !string.IsNullOrEmpty(config.Value.FusionCacheInstance) 
-            ? provider.GetCacheOrNull(config.Value.FusionCacheInstance) 
-            : provider.GetCache(Constants.FusionCacheInstance);
 
-        _cache = cache ?? throw new InvalidOperationException($"Unable to resolve requested FusionCache instance: {config.Value.FusionCacheInstance}. Did you specify the right name?");
+        var cache = config.Value.FusionCacheResolver != null ? config.Value.FusionCacheResolver(provider) : provider.GetCache(Constants.FusionCacheInstance);
+
+        _cache = cache ?? throw new InvalidOperationException($"Unable to resolve requested FusionCache instance. Something has gone very wrong.");
         _logger = logger;
         _config = config.Value;
     }

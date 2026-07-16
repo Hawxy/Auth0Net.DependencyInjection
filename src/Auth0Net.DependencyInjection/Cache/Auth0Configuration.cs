@@ -22,10 +22,10 @@ public sealed class Auth0Configuration
     
     /// <summary>
     /// This package uses FusionCache internally for token caching.
-    /// If you have an existing FusionCache configuration you'd like to use (ie one setup with a distributed cache), pass the name of it here.
-    /// For the default FusionCache instance registered with ".AddFusionCache()", use <see cref="FusionCacheOptions.DefaultCacheName"/>
+    /// If you have an existing FusionCache configuration you'd like to use (ie one setup with a distributed cache), configure it here.
+    /// For the default FusionCache instance registered with ".AddFusionCache()", use "provider.GetDefaultCache()"
     /// </summary>
-    public string? FusionCacheInstance { get; set; }
+    public Func<IFusionCacheProvider, IFusionCache>? FusionCacheResolver { get; set; }
     
 }
 

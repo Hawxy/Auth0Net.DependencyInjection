@@ -134,7 +134,7 @@ public class CacheTests
             ClientId = Guid.NewGuid().ToString(),
             ClientSecret = Guid.NewGuid().ToString(),
             Domain = "https://hawxy.au.auth0.com/",
-            FusionCacheInstance = customCacheName
+            FusionCacheResolver = provider => provider.GetCache(customCacheName)
         });
 
         var authClient = A.Fake<IAuthenticationApiClient>();

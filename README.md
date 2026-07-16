@@ -253,14 +253,14 @@ In some situations you might want to request an access token from Auth0 manually
 
 An in-memory-only instance of [FusionCache](https://github.com/ZiggyCreatures/FusionCache) is used as the caching implementation. This instance is _named_ and will not impact other usages of FusionCache. 
 
-If you want to use your own implementation of FusionCache, specify `FusionCacheInstance` when configurating the authentication client:
+If you want to use your own implementation of FusionCache, specify `FusionCacheResolver` when configurating the authentication client:
 
 ```csharp
 services.AddAuth0AuthenticationClient(x =>
  {
      //...
      // Use the default FusionCache instance registered via `.AddFusionCache()`
-     x.FusionCacheInstance = FusionCacheOptions.DefaultCacheName
+     x.FusionCacheResolver = provider => provider.GetDefaultCache();
  });
 ```
 
