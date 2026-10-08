@@ -6,7 +6,6 @@ using FakeItEasy;
 using Xunit;
 
 namespace Auth0Net.DependencyInjection.Tests;
-#pragma warning disable AUTH0_EXPERIMENTAL
 public class OrganizationScopeFactoryTests
 {
     [Fact]

@@ -93,9 +93,7 @@ public static class Auth0Extensions
         }
 
         services.AddSingleton<HttpClientOrganizationAccessor>();
-#pragma warning disable AUTH0_EXPERIMENTAL
         services.AddTransient(typeof(OrganizationScopeFactory<>));
-#pragma warning restore AUTH0_EXPERIMENTAL
         services.AddSingleton<IAuthenticationApiClient, InjectableAuthenticationApiClient>();
         return services.AddHttpClient<IAuthenticationConnection, HttpClientAuthenticationConnection>()
 #if NET8_0
@@ -123,13 +121,12 @@ public static class Auth0Extensions
     /// Adds the <see cref="IAuth0OnBehalfOfTokenCache"/>, which exchanges a user's access token for an access token to another API using Auth0 On-Behalf-Of token exchange.
     /// </summary>
     /// <remarks>
-    /// <see cref="AddAuth0AuthenticationClient(IServiceCollection,string)"/>, or another overload, must be called first. The domain-only overload is sufficient.
+    /// <see cref="AddAuth0AuthenticationClient(IServiceCollection,string)"/>, or another overload, must also be called. The domain-only overload is sufficient.
     /// The credentials are those of the Auth0 Custom API client linked to this API, and are separate from the Machine-to-Machine credentials in <see cref="Auth0Configuration"/>.
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" />.</param>
     /// <param name="config">A delegate that is used to configure the instance of <see cref="Auth0OnBehalfOfConfiguration" />.</param>
     /// <returns>The <see cref="IServiceCollection" />.</returns>
-    /// <exception cref="InvalidOperationException">No <see cref="IAuthenticationApiClient"/> has been registered.</exception>
     public static IServiceCollection AddAuth0OnBehalfOf(this IServiceCollection services, Action<Auth0OnBehalfOfConfiguration> config)
     {
         services.AddAuth0OnBehalfOfInternal().Configure(config);
@@ -140,13 +137,12 @@ public static class Auth0Extensions
     /// Adds the <see cref="IAuth0OnBehalfOfTokenCache"/>, which exchanges a user's access token for an access token to another API using Auth0 On-Behalf-Of token exchange.
     /// </summary>
     /// <remarks>
-    /// <see cref="AddAuth0AuthenticationClient(IServiceCollection,string)"/>, or another overload, must be called first. The domain-only overload is sufficient.
+    /// <see cref="AddAuth0AuthenticationClient(IServiceCollection,string)"/>, or another overload, must also be called. The domain-only overload is sufficient.
     /// The credentials are those of the Auth0 Custom API client linked to this API, and are separate from the Machine-to-Machine credentials in <see cref="Auth0Configuration"/>.
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" />.</param>
     /// <param name="config">A delegate that is used to configure the instance of <see cref="Auth0OnBehalfOfConfiguration" />, with the ability to request services from the <see cref="IServiceProvider"/>.</param>
     /// <returns>The <see cref="IServiceCollection" />.</returns>
-    /// <exception cref="InvalidOperationException">No <see cref="IAuthenticationApiClient"/> has been registered.</exception>
     public static IServiceCollection AddAuth0OnBehalfOf(this IServiceCollection services, Action<Auth0OnBehalfOfConfiguration, IServiceProvider> config)
     {
         services.AddAuth0OnBehalfOfInternal().Configure(config);
@@ -155,11 +151,14 @@ public static class Auth0Extensions
 
     private static OptionsBuilder<Auth0OnBehalfOfConfiguration> AddAuth0OnBehalfOfInternal(this IServiceCollection services)
     {
-        if (!services.Any(x => x.ServiceType == typeof(IAuthenticationApiClient)))
-            throw new InvalidOperationException($"An {nameof(IAuthenticationApiClient)} must be registered with {nameof(AddAuth0AuthenticationClient)} before calling {nameof(AddAuth0OnBehalfOf)}.");
-
         services.AddAuth0FusionCache();
-        services.TryAddSingleton<IAuth0OnBehalfOfTokenCache, Auth0OnBehalfOfTokenCache>();
+        services.TryAddSingleton<IAuth0OnBehalfOfTokenCache>(provider =>
+        {
+            var client = provider.GetService<IAuthenticationApiClient>()
+                ?? throw new InvalidOperationException($"No {nameof(IAuthenticationApiClient)} has been registered. Call {nameof(AddAuth0AuthenticationClient)} to use {nameof(AddAuth0OnBehalfOf)}.");
+
+            return ActivatorUtilities.CreateInstance<Auth0OnBehalfOfTokenCache>(provider, client);
+        });
 
         return services.AddOptions<Auth0OnBehalfOfConfiguration>()
             .Validate(x => x.IsValid(),
@@ -224,7 +223,7 @@ public static class Auth0Extensions
     /// <remarks>
     /// <see cref="AddAuth0OnBehalfOf(IServiceCollection,Action{Auth0OnBehalfOfConfiguration})"/>, or its other overload, must be called.
     /// The user's access token is taken from <see cref="OnBehalfOfRequestExtensions.SetSubjectToken"/> if set on the request, otherwise from <see cref="Auth0OnBehalfOfTokenHandlerConfig.SubjectTokenResolver"/>.
-    /// Failures are thrown from the request as an <see cref="Auth0OnBehalfOfException"/>.
+    /// Rejected exchanges are thrown from the request as an <see cref="Auth0OnBehalfOfException"/>. Other failures calling Auth0 propagate unchanged.
     /// </remarks>
     /// <param name="builder">The <see cref="IHttpClientBuilder"/> you wish to configure. </param>
     /// <param name="config">A delegate that is used to configure the instance of <see cref="Auth0OnBehalfOfTokenHandlerConfig" />.</param>

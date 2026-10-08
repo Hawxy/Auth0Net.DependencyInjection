@@ -1,6 +1,5 @@
 ﻿using Auth0Net.DependencyInjection.Organizations;
 using Sample.ConsoleApp.Services; 
-#pragma warning disable AUTH0_EXPERIMENTAL
 
 namespace Sample.ConsoleApp;
 

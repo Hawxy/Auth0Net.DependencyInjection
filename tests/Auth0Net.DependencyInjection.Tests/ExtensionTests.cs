@@ -196,15 +196,35 @@ public class ExtensionTests
     }
 
     [Fact]
-    public void AddAuth0OnBehalfOf_Throws_WithoutAuthenticationClient()
+    public void AddAuth0OnBehalfOf_Throws_OnResolve_WithoutAuthenticationClient()
     {
         var services = new ServiceCollection();
-
-        Assert.Throws<InvalidOperationException>(() => services.AddAuth0OnBehalfOf(x =>
+        services.AddAuth0OnBehalfOf(x =>
         {
             x.ClientId = "obo-id";
             x.ClientSecret = "obo-secret";
-        }));
+        });
+
+        var provider = services.BuildServiceProvider();
+
+        var ex = Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IAuth0OnBehalfOfTokenCache>());
+        Assert.Contains(nameof(Auth0Extensions.AddAuth0AuthenticationClient), ex.Message);
+    }
+
+    [Fact]
+    public void AddAuth0OnBehalfOf_Resolves_WhenRegisteredBeforeAuthenticationClient()
+    {
+        var services = new ServiceCollection();
+        services.AddAuth0OnBehalfOf(x =>
+        {
+            x.ClientId = "obo-id";
+            x.ClientSecret = "obo-secret";
+        });
+        services.AddAuth0AuthenticationClient("test.au.auth0.com");
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.IsType<Auth0OnBehalfOfTokenCache>(provider.GetRequiredService<IAuth0OnBehalfOfTokenCache>());
     }
 
     [Fact]

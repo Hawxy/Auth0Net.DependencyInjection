@@ -1,3 +1,6 @@
+#if NET9_0_OR_GREATER
+using System.Buffers.Text;
+#endif
 using System.Security.Cryptography;
 using System.Text;
 using Auth0.AuthenticationApi;
@@ -17,10 +20,12 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
 
     private readonly IAuthenticationApiClient _client;
     private readonly IFusionCache _cache;
+    private readonly FusionCacheEntryOptions _entryOptions;
     private readonly ILogger<Auth0OnBehalfOfTokenCache> _logger;
     private readonly Auth0OnBehalfOfConfiguration _config;
 
     private const double TokenExpiryBuffer = 0.01d;
+    private const double MinimumExpiryBufferSeconds = 30d;
 
     /// <summary>
     /// An implementation of <see cref="IAuth0OnBehalfOfTokenCache"/> that exchanges and caches Auth0 On-Behalf-Of access tokens.
@@ -29,12 +34,28 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
         IOptions<Auth0Configuration> config, IOptions<Auth0OnBehalfOfConfiguration> onBehalfOfConfig)
     {
         _client = client;
-
-        var cache = config.Value.FusionCacheResolver != null ? config.Value.FusionCacheResolver(provider) : provider.GetCache(Constants.FusionCacheInstance);
-
-        _cache = cache ?? throw new InvalidOperationException($"Unable to resolve requested FusionCache instance. Something has gone very wrong.");
         _logger = logger;
         _config = onBehalfOfConfig.Value;
+
+        var resolver = _config.FusionCacheResolver ?? config.Value.FusionCacheResolver;
+        var cache = resolver != null ? resolver(provider) : provider.GetCache(Constants.FusionCacheInstance);
+
+        _cache = cache ?? throw new InvalidOperationException($"Unable to resolve requested FusionCache instance. Something has gone very wrong.");
+
+        _entryOptions = _cache.CreateEntryOptions(options =>
+        {
+            // Entries are tied to one user's token and must never outlive it.
+            options.IsFailSafeEnabled = false;
+            options.AllowStaleOnReadOnly = false;
+            options.EagerRefreshThreshold = null;
+            options.JitterMaxDuration = TimeSpan.Zero;
+            options.MemoryCacheDuration = null;
+            options.DistributedCacheDuration = null;
+            // Entries never change once written, so other nodes don't need to be notified.
+            options.SkipBackplaneNotifications = true;
+            options.SkipDistributedCacheRead = !_config.UseDistributedCache;
+            options.SkipDistributedCacheWrite = !_config.UseDistributedCache;
+        });
     }
 
     /// <inheritdoc cref="IAuth0OnBehalfOfTokenCache.GetTokenAsync"/>
@@ -47,18 +68,15 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
 
         _logger.OnBehalfOfTokenRequested(audience);
 
-        var subjectExpiry = ReadSubjectExpiry(subjectToken);
-        if (subjectExpiry <= DateTimeOffset.UtcNow)
-        {
-            var expired = Auth0OnBehalfOfException.SubjectTokenExpired();
-            _logger.OnBehalfOfExchangeFailed(audience, expired.StatusCode, expired.Error);
-            throw expired;
-        }
-
         var normalizedScope = NormalizeScope(scope);
 
         return (await _cache.GetOrSetAsync<OnBehalfOfToken>(Key(subjectToken, audience, normalizedScope, organization), async (ctx, ct) =>
         {
+            // Only checked on a miss, as a cached entry never outlives the subject token.
+            var subjectExpiry = ReadSubjectExpiry(subjectToken);
+            if (subjectExpiry <= DateTimeOffset.UtcNow)
+                throw Failed(audience, Auth0OnBehalfOfException.SubjectTokenExpired());
+
             var request = new OnBehalfOfTokenRequest
             {
                 SubjectToken = subjectToken,
@@ -70,6 +88,8 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
                 ClientAssertionSecurityKey = _config.ClientAssertionSecurityKey!,
                 ClientAssertionSecurityKeyAlgorithm = _config.ClientAssertionSecurityKeyAlgorithm!
             };
+
+            var requestedAt = DateTimeOffset.UtcNow;
 
             OnBehalfOfTokenResponse response;
             try
@@ -85,11 +105,7 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
                 throw Failed(audience, Auth0OnBehalfOfException.From(ex));
             }
 
-            var issuedAt = DateTimeOffset.UtcNow;
-
-            var duration = TimeSpan.FromSeconds(Math.Ceiling(response.ExpiresIn - response.ExpiresIn * TokenExpiryBuffer));
-            if (subjectExpiry is { } expiry && expiry - issuedAt < duration)
-                duration = expiry - issuedAt;
+            var duration = CacheDuration(response.ExpiresIn, requestedAt, DateTimeOffset.UtcNow, subjectExpiry);
 
             if (duration > TimeSpan.Zero)
             {
@@ -97,7 +113,6 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
             }
             else
             {
-                // The subject token expired during the exchange.
                 ctx.Options.SkipMemoryCacheWrite = true;
                 ctx.Options.SkipDistributedCacheWrite = true;
             }
@@ -105,23 +120,34 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
             if (_logger.IsEnabled(LogLevel.Debug))
                 _logger.OnBehalfOfTokenIssued(audience, response.GetCurrentActor(), Math.Max(duration.TotalSeconds, 0));
 
-            return new OnBehalfOfToken(response.AccessToken, issuedAt.AddSeconds(response.ExpiresIn), response.Scope);
-        }, options =>
-        {
-            // Entries are tied to one user's token and must never outlive it.
-            options.IsFailSafeEnabled = false;
-            options.AllowStaleOnReadOnly = false;
-            options.EagerRefreshThreshold = null;
-            options.JitterMaxDuration = TimeSpan.Zero;
-            options.MemoryCacheDuration = null;
-            options.DistributedCacheDuration = null;
-        }, token))!;
+            return new OnBehalfOfToken(response.AccessToken, requestedAt.AddSeconds(response.ExpiresIn), response.Scope);
+        }, _entryOptions, token))!;
     }
 
     private Auth0OnBehalfOfException Failed(string audience, Auth0OnBehalfOfException exception)
     {
-        _logger.OnBehalfOfExchangeFailed(audience, exception.StatusCode, exception.Error);
+        // A rejected or expired subject token is routine, so it is not logged above Debug.
+        var level = exception.StatusCode == 401 ? LogLevel.Debug : LogLevel.Information;
+        _logger.OnBehalfOfExchangeFailed(level, audience, exception.StatusCode, exception.Error);
         return exception;
+    }
+
+    /// <summary>
+    /// Returns how long, from <paramref name="now"/>, an exchanged token can be cached.
+    /// </summary>
+    /// <remarks>
+    /// The token is cached until its expiry minus 1% of its lifetime or 30 seconds, whichever is larger but at most half its lifetime,
+    /// counted from when it was requested. The result is capped at <paramref name="subjectExpiry"/>, and is zero or negative if the token should not be cached.
+    /// </remarks>
+    internal static TimeSpan CacheDuration(double expiresIn, DateTimeOffset requestedAt, DateTimeOffset now, DateTimeOffset? subjectExpiry)
+    {
+        var buffer = Math.Min(Math.Max(expiresIn * TokenExpiryBuffer, MinimumExpiryBufferSeconds), expiresIn / 2);
+        var cacheUntil = requestedAt.AddSeconds(expiresIn - buffer);
+
+        if (subjectExpiry < cacheUntil)
+            cacheUntil = subjectExpiry.Value;
+
+        return cacheUntil - now;
     }
 
     internal static string Key(string subjectToken, string audience, string normalizedScope, string? organization) =>
@@ -132,7 +158,11 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
         if (string.IsNullOrWhiteSpace(scope))
             return string.Empty;
 
-        var scopes = scope!
+        // A single scope needs no normalization.
+        if (!scope!.Any(char.IsWhiteSpace))
+            return scope;
+
+        var scopes = scope
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
             .Distinct(StringComparer.Ordinal)
             .OrderBy(x => x, StringComparer.Ordinal);
@@ -146,13 +176,14 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
     private static string Hash(string value)
     {
         var bytes = Encoding.UTF8.GetBytes(value);
-#if NET8_0_OR_GREATER
-        var hash = SHA256.HashData(bytes);
+#if NET9_0_OR_GREATER
+        return Base64Url.EncodeToString(SHA256.HashData(bytes));
+#elif NET8_0_OR_GREATER
+        return Convert.ToBase64String(SHA256.HashData(bytes)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 #else
         using var sha = SHA256.Create();
-        var hash = sha.ComputeHash(bytes);
+        return Convert.ToBase64String(sha.ComputeHash(bytes)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 #endif
-        return Convert.ToBase64String(hash).TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
 
     /// <summary>

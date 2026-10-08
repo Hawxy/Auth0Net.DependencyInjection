@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Auth0.AuthenticationApi;
 using Auth0.ManagementApi;
 
@@ -11,7 +10,6 @@ namespace Auth0Net.DependencyInjection.Organizations;
 /// <typeparam name="TClient">
 /// The type of client used within the organization scope. This must be a user-defined remote client.
 /// </typeparam>
-[Experimental("AUTH0_EXPERIMENTAL")]
 public class OrganizationScopeFactory<TClient> where TClient: class
 {
     private readonly TClient _client;

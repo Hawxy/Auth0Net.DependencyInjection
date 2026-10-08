@@ -1,4 +1,5 @@
 using Microsoft.IdentityModel.Tokens;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Auth0Net.DependencyInjection.Cache;
 
@@ -30,6 +31,20 @@ public sealed class Auth0OnBehalfOfConfiguration
     /// The signing algorithm for <see cref="ClientAssertionSecurityKey"/>, such as <see cref="SecurityAlgorithms.RsaSha256"/>.
     /// </summary>
     public string? ClientAssertionSecurityKeyAlgorithm { get; set; }
+
+    /// <summary>
+    /// The FusionCache instance used for exchanged tokens.
+    /// Defaults to <see cref="Auth0Configuration.FusionCacheResolver"/> if set, otherwise the instance used by this library.
+    /// </summary>
+    public Func<IFusionCacheProvider, IFusionCache>? FusionCacheResolver { get; set; }
+
+    /// <summary>
+    /// Whether exchanged tokens are read from and written to the distributed level of the FusionCache instance, if it has one. Defaults to <c>false</c>.
+    /// </summary>
+    /// <remarks>
+    /// Exchanged tokens are user access tokens, so only enable this if the distributed cache is appropriately secured.
+    /// </remarks>
+    public bool UseDistributedCache { get; set; }
 
     internal bool IsValid() =>
         !string.IsNullOrWhiteSpace(ClientId) &&

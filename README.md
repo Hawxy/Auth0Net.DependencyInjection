@@ -179,7 +179,7 @@ builder.Services
     });
 ```
 
-#### Dynamic Organization via Client Scope (Experimental)
+#### Dynamic Organization via Client Scope
 
 If your organization source is scoped to the usage of your service, such as an ASP.NET Core request, then you'll want the ability to freely set the Organization.
 You can achieve this by injecting your client via `OrganizationScopeFactory<TClient>` and then creating an organization scope via `.CreateScope`:
@@ -211,15 +211,13 @@ There's a few limitations if you're using this functionality, as it uses `AsyncL
 
 If you have a use-case for either of these items, please open an issue with an example.
 
-This functionality is marked as experimental, and you must `#pragma warning disable AUTH0_EXPERIMENTAL` to use it. 
-
 ### On-Behalf-Of Token Exchange
 
 Auth0's On-Behalf-Of (OBO) token exchange lets your API exchange the access token it received from a user for an access token to another API. The new token keeps the user's identity (`sub`, `org_id`) and records your API as the actor (`act`).
 
 **Prerequisite:** create a Custom API client in Auth0 that is linked to your API, and allow it to exchange tokens for the target API. Its credentials are separate from the Machine-to-Machine credentials used elsewhere in this library.
 
-Register the exchange after any `AddAuth0AuthenticationClient` overload. The domain-only overload is enough if you don't need Machine-to-Machine tokens:
+It requires one of the `AddAuth0AuthenticationClient` overloads. The domain-only overload is enough if you don't need Machine-to-Machine tokens:
 
 ```csharp
 services.AddAuth0AuthenticationClient(builder.Configuration["Auth0:Domain"]);
@@ -301,9 +299,9 @@ var request = new HttpRequestMessage(HttpMethod.Get, "things").SetSubjectToken(t
 var response = await httpClient.SendAsync(request);
 ```
 
-`Audience`, `AudienceResolver`, `Organization` and `OrganizationResolver` behave as they do for `AddAccessToken`, and an organization set by a client scope (see [Dynamic Organization via Client Scope](#dynamic-organization-via-client-scope-experimental)) takes precedence over both.
+`Audience`, `AudienceResolver`, `Organization` and `OrganizationResolver` behave as they do for `AddAccessToken`.
 
-Failures are not handled by the handler. They propagate from `SendAsync` as an `Auth0OnBehalfOfException`, including a 401 when no subject token is available.
+Failures are not handled by the handler. Rejected exchanges propagate from `SendAsync` as an `Auth0OnBehalfOfException`, including a 401 when no subject token is available. Other failures, such as network errors or timeouts while calling Auth0, propagate unchanged.
 
 ## Additional Functionality
 
@@ -317,11 +315,11 @@ For example, formatting the domain for the JWT Authority:
 
 ```csharp
 .AddJwtBearer(options =>
-             {
-                 // "my-tenant.auth0.com" -> "https://my-tenant.auth0.com/"
-                 options.Authority = builder.Configuration["Auth0:Domain"].ToHttpsUrl();
-                 //...
-             });
+ {
+     // "my-tenant.auth0.com" -> "https://my-tenant.auth0.com/"
+     options.Authority = builder.Configuration["Auth0:Domain"].ToHttpsUrl();
+     //...
+ });
  ```
 
 ## Internals
@@ -355,9 +353,9 @@ services.AddAuth0AuthenticationClient(x =>
  });
 ```
 
-`IAuth0OnBehalfOfTokenCache` uses the same FusionCache instance. Exchanged tokens are cached per user token, audience, set of scopes and organization; scope order and duplicates do not matter. The cache key is a SHA-256 hash of these values, so it does not contain the user's token. An exchanged token is cached until 99% of its lifetime has passed or the user's token expires, whichever comes first. Unlike Machine-to-Machine tokens, these entries are never refreshed in the background, and fail-safe is disabled for them, so a token is never served after the user's token has expired.
+`IAuth0OnBehalfOfTokenCache` uses the same FusionCache instance, unless `FusionCacheResolver` is set on `Auth0OnBehalfOfConfiguration`. Unlike Machine-to-Machine tokens, these entries are never refreshed in the background, and fail-safe is disabled for them, so a token is never served after the user's token has expired.
 
-If `FusionCacheResolver` returns a cache with a distributed second level, exchanged tokens are also written to the distributed cache. They are short-lived user tokens, so make sure that cache is appropriately secured.
+Exchanged tokens are only kept in memory, even if the FusionCache instance has a distributed second level. To share them through the distributed cache, set `UseDistributedCache = true` in `AddAuth0OnBehalfOf`. They are short-lived user tokens, so make sure that cache is appropriately secured.
 
 ## Disclaimer
 

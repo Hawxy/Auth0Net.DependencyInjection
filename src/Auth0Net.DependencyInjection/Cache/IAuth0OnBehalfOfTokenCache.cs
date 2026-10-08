@@ -11,7 +11,8 @@ public interface IAuth0OnBehalfOfTokenCache
     /// <remarks>
     /// <para>
     /// Results are cached per subject token, audience, scope set and organization. The cache key is a SHA-256 hash of these values, so it does not contain the subject token.
-    /// A cached token is kept until 99% of its lifetime has passed, or until the subject token expires, whichever is sooner.
+    /// A cached token is kept until it is within 1% of its lifetime or 30 seconds of expiring, whichever is larger (but at most half its lifetime),
+    /// or until the subject token expires, whichever is sooner.
     /// </para>
     /// <para>
     /// The subject token's <c>exp</c> claim is read without validating the token. If it has already passed, Auth0 is not called and an
