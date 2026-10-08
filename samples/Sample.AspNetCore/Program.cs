@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using Auth0.ManagementApi;
 using Auth0Net.DependencyInjection;
+using Auth0Net.DependencyInjection.Cache;
 using Auth0Net.DependencyInjection.HttpClient;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -43,6 +45,27 @@ builder.Services.AddAuth0AuthenticationClient(config =>
 // Adds the ManagementApiClient with automatic injection of the management token based on the configuration set above.
 builder.Services.AddAuth0ManagementClient();
 
+// Adds On-Behalf-Of token exchange, authenticating as the Custom API client linked to this API.
+builder.Services.AddAuth0OnBehalfOf(config =>
+{
+    config.ClientId = builder.Configuration["Auth0:OnBehalfOf:ClientId"];
+    config.ClientSecret = builder.Configuration["Auth0:OnBehalfOf:ClientSecret"];
+});
+
+// Calls another API with a token exchanged from the caller's access token.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient("Downstream", x => x.BaseAddress = new Uri(builder.Configuration["Auth0:OnBehalfOf:Url"]!))
+    .AddOnBehalfOfToken(config =>
+    {
+        config.Audience = builder.Configuration["Auth0:OnBehalfOf:Audience"];
+        config.Scope = "read:data";
+        config.SubjectTokenResolver = (sp, _) =>
+            sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.Request.Headers.Authorization.ToString() is { } h
+            && h.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                ? h["Bearer ".Length..]
+                : null;
+    });
+
 builder.Services.AddGrpc();
 
 var app = builder.Build();
@@ -70,5 +93,49 @@ app.MapGet("/users/org-scoped", async ([FromServices] IManagementApiClient clien
     return user.CurrentPage.Select(x => new Sample.AspNetCore.User(x.UserId, x.Name, x.Email)).ToArray();
 });
 
+// Exchanges the caller's access token for a token to another API, issued on the caller's behalf.
+app.MapPost("/on-behalf-of/token", async (HttpContext context, IAuth0OnBehalfOfTokenCache tokenCache, IConfiguration configuration) =>
+{
+    // JwtBearer saves the incoming token by default.
+    var subjectToken = await context.GetTokenAsync("access_token");
+    if (string.IsNullOrEmpty(subjectToken))
+        return Results.Unauthorized();
+
+    try
+    {
+        var token = await tokenCache.GetTokenAsync(
+            subjectToken,
+            configuration["Auth0:OnBehalfOf:Audience"]!,
+            scope: "read:data",
+            organization: context.User.FindFirstValue("org_id"),
+            token: context.RequestAborted);
+
+        context.Response.Headers.CacheControl = "no-store";
+        return Results.Ok(new { access_token = token.AccessToken, expires_at = token.ExpiresAt, scope = token.Scope });
+    }
+    catch (Auth0OnBehalfOfException ex)
+    {
+        if (ex.RetryAfter is { } retryAfter)
+            context.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+
+        return Results.Problem(statusCode: ex.StatusCode, title: ex.Error, detail: ex.ErrorDescription);
+    }
+});
+
+// Calls another API on the caller's behalf, using the "Downstream" client registered above.
+app.MapGet("/on-behalf-of/data", async (IHttpClientFactory factory, HttpContext context) =>
+{
+    var client = factory.CreateClient("Downstream");
+
+    try
+    {
+        var data = await client.GetStringAsync("data", context.RequestAborted);
+        return Results.Text(data, "application/json");
+    }
+    catch (Auth0OnBehalfOfException ex)
+    {
+        return Results.Problem(statusCode: ex.StatusCode, title: ex.Error, detail: ex.ErrorDescription);
+    }
+});
 
 app.Run();

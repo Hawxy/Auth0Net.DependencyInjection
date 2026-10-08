@@ -87,4 +87,13 @@ internal static partial class Log
     
     [LoggerMessage(EventId = 2003, Message = "Auth0 Token for audience {audience} will expire in {expiry} seconds", Level = LogLevel.Debug)]
     public static partial void ExpiresAt(this ILogger logger, string audience, double expiry);
+
+    [LoggerMessage(EventId = 2004, Message = "Auth0 On-Behalf-Of token was requested for audience: {audience}", Level = LogLevel.Debug)]
+    public static partial void OnBehalfOfTokenRequested(this ILogger logger, string audience);
+
+    [LoggerMessage(EventId = 2005, Message = "Auth0 On-Behalf-Of token for audience {audience} was issued to actor {actor} and will be cached for {duration} seconds", Level = LogLevel.Debug)]
+    public static partial void OnBehalfOfTokenIssued(this ILogger logger, string audience, string? actor, double duration);
+
+    [LoggerMessage(EventId = 2006, Message = "Auth0 On-Behalf-Of token exchange for audience {audience} failed with status code {statusCode} ({error})", Level = LogLevel.Information)]
+    public static partial void OnBehalfOfExchangeFailed(this ILogger logger, string audience, int statusCode, string? error);
 }
