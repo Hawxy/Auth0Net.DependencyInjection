@@ -17,6 +17,8 @@ This library hopes to solve that problem, featuring:
  :white_check_mark: [HttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests) integration for centralized extensibility and management of the internal HTTP handlers.
  
  :white_check_mark: `IHttpClientBuilder` extensions, providing handlers to automatically append access tokens to outgoing requests.
+
+ :white_check_mark: Cached On-Behalf-Of token exchange, for calling other APIs as the current user.
  
  This library is compatible with .NET 8+ as well as .NET Framework 4.8 and is suitable for use in ASP.NET Core and standalone .NET Generic Host applications.
  
@@ -177,7 +179,7 @@ builder.Services
     });
 ```
 
-#### Dynamic Organization via Client Scope (Experimental)
+#### Dynamic Organization via Client Scope
 
 If your organization source is scoped to the usage of your service, such as an ASP.NET Core request, then you'll want the ability to freely set the Organization.
 You can achieve this by injecting your client via `OrganizationScopeFactory<TClient>` and then creating an organization scope via `.CreateScope`:
@@ -209,7 +211,97 @@ There's a few limitations if you're using this functionality, as it uses `AsyncL
 
 If you have a use-case for either of these items, please open an issue with an example.
 
-This functionality is marked as experimental, and you must `#pragma warning disable AUTH0_EXPERIMENTAL` to use it. 
+### On-Behalf-Of Token Exchange
+
+Auth0's On-Behalf-Of (OBO) token exchange lets your API exchange the access token it received from a user for an access token to another API. The new token keeps the user's identity (`sub`, `org_id`) and records your API as the actor (`act`).
+
+**Prerequisite:** create a Custom API client in Auth0 that is linked to your API, and allow it to exchange tokens for the target API. Its credentials are separate from the Machine-to-Machine credentials used elsewhere in this library.
+
+It requires one of the `AddAuth0AuthenticationClient` overloads. The domain-only overload is enough if you don't need Machine-to-Machine tokens:
+
+```csharp
+services.AddAuth0AuthenticationClient(builder.Configuration["Auth0:Domain"]);
+
+services.AddAuth0OnBehalfOf(config =>
+{
+    config.ClientId = builder.Configuration["Auth0:OnBehalfOf:ClientId"];
+    config.ClientSecret = builder.Configuration["Auth0:OnBehalfOf:ClientSecret"];
+    // Or authenticate with Private Key JWT instead of a secret:
+    // config.ClientAssertionSecurityKey = new RsaSecurityKey(rsa);
+    // config.ClientAssertionSecurityKeyAlgorithm = SecurityAlgorithms.RsaSha256;
+});
+```
+
+Inject `IAuth0OnBehalfOfTokenCache` and pass it the user's access token. In ASP.NET Core, `JwtBearer` saves the incoming token by default, so it can be read with `GetTokenAsync("access_token")`:
+
+```csharp
+app.MapPost("/downstream-token", async (HttpContext ctx, IAuth0OnBehalfOfTokenCache tokenCache) =>
+{
+    var subjectToken = await ctx.GetTokenAsync("access_token");
+    if (string.IsNullOrEmpty(subjectToken))
+        return Results.Unauthorized();
+
+    try
+    {
+        var token = await tokenCache.GetTokenAsync(
+            subjectToken,
+            audience: "https://downstream.example.com/",
+            scope: "read:data",
+            organization: ctx.User.FindFirstValue("org_id"),
+            token: ctx.RequestAborted);
+
+        return Results.Ok(new { token.AccessToken, token.ExpiresAt, token.Scope });
+    }
+    catch (Auth0OnBehalfOfException ex)
+    {
+        // 401: the user's token is invalid or expired. 403: the client, scope or organization is not allowed. 429: rate limited, see ex.RetryAfter.
+        return Results.Problem(statusCode: ex.StatusCode, title: ex.Error, detail: ex.ErrorDescription);
+    }
+});
+```
+
+`OnBehalfOfToken.Scope` holds the scopes Auth0 granted, which may be narrower than the scopes requested. If the user's token has already expired, Auth0 is not called and a 401 `Auth0OnBehalfOfException` is thrown.
+
+### Calling a downstream API on behalf of the user
+
+`AddOnBehalfOfToken` adds a handler to an `HttpClient` that exchanges the user's access token and sets the exchanged token as the `Authorization` header of each request. It requires `AddAuth0OnBehalfOf`; resolving the client without it throws an `InvalidOperationException`.
+
+```csharp
+services.AddAuth0AuthenticationClient(builder.Configuration["Auth0:Domain"]);
+
+services.AddAuth0OnBehalfOf(config =>
+{
+    config.ClientId = builder.Configuration["Auth0:OnBehalfOf:ClientId"];
+    config.ClientSecret = builder.Configuration["Auth0:OnBehalfOf:ClientSecret"];
+});
+
+services.AddHttpContextAccessor();
+
+services.AddHttpClient<MyClient>(x => x.BaseAddress = new Uri(builder.Configuration["MyHttpService:Url"]))
+    .AddOnBehalfOfToken(o =>
+    {
+        o.Audience = builder.Configuration["MyHttpService:Audience"];
+        o.Scope = "read:things";
+        o.SubjectTokenResolver = (sp, _) =>
+            sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.Request.Headers.Authorization.ToString() is { } h
+            && h.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                ? h["Bearer ".Length..]
+                : null;
+    });
+```
+
+`SubjectTokenResolver` receives the service provider the handler was created from, which is not the scope of the incoming request, so read request state through a singleton such as `IHttpContextAccessor`.
+
+When there is no `HttpContext`, such as in a background job, set the user's token on the request instead. A token set this way takes precedence over `SubjectTokenResolver`:
+
+```csharp
+var request = new HttpRequestMessage(HttpMethod.Get, "things").SetSubjectToken(token);
+var response = await httpClient.SendAsync(request);
+```
+
+`Audience`, `AudienceResolver`, `Organization` and `OrganizationResolver` behave as they do for `AddAccessToken`.
+
+Failures are not handled by the handler. Rejected exchanges propagate from `SendAsync` as an `Auth0OnBehalfOfException`, including a 401 when no subject token is available. Other failures, such as network errors or timeouts while calling Auth0, propagate unchanged.
 
 ## Additional Functionality
 
@@ -223,11 +315,11 @@ For example, formatting the domain for the JWT Authority:
 
 ```csharp
 .AddJwtBearer(options =>
-             {
-                 // "my-tenant.auth0.com" -> "https://my-tenant.auth0.com/"
-                 options.Authority = builder.Configuration["Auth0:Domain"].ToHttpsUrl();
-                 //...
-             });
+ {
+     // "my-tenant.auth0.com" -> "https://my-tenant.auth0.com/"
+     options.Authority = builder.Configuration["Auth0:Domain"].ToHttpsUrl();
+     //...
+ });
  ```
 
 ## Internals
@@ -260,6 +352,10 @@ services.AddAuth0AuthenticationClient(x =>
      x.FusionCacheResolver = provider => provider.GetDefaultCache();
  });
 ```
+
+`IAuth0OnBehalfOfTokenCache` uses the same FusionCache instance, unless `FusionCacheResolver` is set on `Auth0OnBehalfOfConfiguration`. Unlike Machine-to-Machine tokens, these entries are never refreshed in the background, and fail-safe is disabled for them, so a token is never served after the user's token has expired.
+
+Exchanged tokens are only kept in memory, even if the FusionCache instance has a distributed second level. To share them through the distributed cache, set `UseDistributedCache = true` in `AddAuth0OnBehalfOf`. They are short-lived user tokens, so make sure that cache is appropriately secured.
 
 ## Disclaimer
 
