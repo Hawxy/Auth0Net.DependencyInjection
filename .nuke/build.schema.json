@@ -105,7 +105,7 @@
       "properties": {
         "NugetApiKey": {
           "type": "string",
-          "description": "Nuget Api Key",
+          "description": "NuGet API key, short-lived key issued by NuGet/login via trusted publishing",
           "default": "Secrets must be entered via 'nuke :secrets [profile]'"
         },
         "Solution": {

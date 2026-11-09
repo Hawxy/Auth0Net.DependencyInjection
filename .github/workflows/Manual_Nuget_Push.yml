@@ -5,7 +5,7 @@
 #
 #     - To turn off auto-generation set:
 #
-#         [GithubActionsExtended (AutoGenerate = false)]
+#         [TrustedPublishingGitHubActions (AutoGenerate = false)]
 #
 #     - To trigger manual generation invoke:
 #
@@ -18,6 +18,10 @@ name: Manual_Nuget_Push
 
 on: [workflow_dispatch]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   ubuntu-latest:
     name: ubuntu-latest
@@ -29,7 +33,7 @@ jobs:
             8.0
             9.0
             10.0
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: 'Cache: .nuke/temp, ~/.nuget/packages'
         uses: actions/cache@v4
         with:
@@ -37,7 +41,12 @@ jobs:
             .nuke/temp
             ~/.nuget/packages
           key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props') }}
+      - name: 'NuGet login (trusted publishing)'
+        id: nuget_login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
       - name: 'Run: NugetPush'
         run: ./build.cmd NugetPush
         env:
-          NugetApiKey: ${{ secrets.NUGET_API_KEY }}
+          NugetApiKey: ${{ steps.nuget_login.outputs.NUGET_API_KEY }}
