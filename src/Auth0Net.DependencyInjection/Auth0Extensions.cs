@@ -154,8 +154,12 @@ public static class Auth0Extensions
         services.AddAuth0FusionCache();
         services.TryAddSingleton<IAuth0OnBehalfOfTokenCache>(provider =>
         {
-            var client = provider.GetService<IAuthenticationApiClient>()
-                ?? throw new InvalidOperationException($"No {nameof(IAuthenticationApiClient)} has been registered. Call {nameof(AddAuth0AuthenticationClient)} to use {nameof(AddAuth0OnBehalfOf)}.");
+            if (provider.GetService<IAuthenticationApiClient>() is null)
+                throw new InvalidOperationException($"No {nameof(IAuthenticationApiClient)} has been registered. Call {nameof(AddAuth0AuthenticationClient)} to use {nameof(AddAuth0OnBehalfOf)}.");
+
+            // A dedicated client whose connection adds the requested_token_type parameter missing from Auth0.AuthenticationApi.
+            var client = new InjectableAuthenticationApiClient(provider.GetRequiredService<IOptions<Auth0Configuration>>(),
+                new OnBehalfOfAuthenticationConnection(provider.GetRequiredService<IAuthenticationConnection>()));
 
             return ActivatorUtilities.CreateInstance<Auth0OnBehalfOfTokenCache>(provider, client);
         });
