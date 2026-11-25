@@ -262,6 +262,23 @@ app.MapPost("/downstream-token", async (HttpContext ctx, IAuth0OnBehalfOfTokenCa
 
 `OnBehalfOfToken.Scope` holds the scopes Auth0 granted, which may be narrower than the scopes requested. If the user's token has already expired, Auth0 is not called and a 401 `Auth0OnBehalfOfException` is thrown.
 
+#### Multiple custom domains
+
+Auth0 only exchanges a token on the domain that issued it. If users sign in through more than one custom domain of your tenant, an exchange sent to the wrong domain fails with `invalid_request: Failed to verify access token: unexpected "iss" claim value`. List the other domains in `AdditionalDomains`:
+
+```csharp
+services.AddAuth0OnBehalfOf(config =>
+{
+    config.ClientId = builder.Configuration["Auth0:OnBehalfOf:ClientId"];
+    config.ClientSecret = builder.Configuration["Auth0:OnBehalfOf:ClientSecret"];
+    config.AdditionalDomains = ["login.other-domain.com"];
+});
+```
+
+A token whose `iss` is one of these domains is exchanged on that domain. Any other token is exchanged on the domain passed to `AddAuth0AuthenticationClient`. No other domain is ever contacted, whatever the token's `iss` says.
+
+The exchanged token carries the domain it was exchanged on as its issuer, so the downstream API must accept that issuer as well.
+
 ### Calling a downstream API on behalf of the user
 
 `AddOnBehalfOfToken` adds a handler to an `HttpClient` that exchanges the user's access token and sets the exchanged token as the `Authorization` header of each request. It requires `AddAuth0OnBehalfOf`; resolving the client without it throws an `InvalidOperationException`.

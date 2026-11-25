@@ -5,7 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>8.0.1</Version>
+    <Version>8.1.0</Version>
     <Authors>Hawxy</Authors>
     <Description>Dependency Injection, HttpClientFactory &amp; ASP.NET Core extensions for Auth0.NET</Description>
 	<LangVersion>latest</LangVersion>
@@ -21,8 +21,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Auth0.AuthenticationApi" Version="7.49.0" />
-    <PackageReference Include="Auth0.ManagementApi" Version="10.4.0" />
+    <PackageReference Include="Auth0.AuthenticationApi" Version="7.50.0" />
+    <PackageReference Include="Auth0.ManagementApi" Version="10.7.0" />
     <PackageReference Include="DotNet.ReproducibleBuilds" Version="2.0.5" PrivateAssets="All" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.5" />
     <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.9.0" />

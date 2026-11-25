@@ -2,12 +2,15 @@ using System;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Auth0.AuthenticationApi;
+using Auth0.AuthenticationApi.Models;
 using Auth0.ManagementApi;
 using Auth0Net.DependencyInjection.Cache;
 using Auth0Net.DependencyInjection.Injectables;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Xunit;
 using ZiggyCreatures.Caching.Fusion;
@@ -312,6 +315,73 @@ public class ExtensionTests
         var provider = services.BuildServiceProvider();
 
         Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IAuth0OnBehalfOfTokenCache>());
+    }
+
+    [Fact]
+    public void AddAuth0OnBehalfOf_Rejects_EmptyAdditionalDomain()
+    {
+        var services = new ServiceCollection();
+        services.AddAuth0AuthenticationClient("test.au.auth0.com");
+        services.AddAuth0OnBehalfOf(x =>
+        {
+            x.ClientId = "obo-id";
+            x.ClientSecret = "obo-secret";
+            x.AdditionalDomains = ["login.legacy.example.com", " "];
+        });
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IAuth0OnBehalfOfTokenCache>());
+    }
+
+    [Theory]
+    [InlineData("https://login.legacy.example.com/", "https://login.legacy.example.com/oauth/token")]
+    [InlineData("https://LOGIN.legacy.example.com/", "https://login.legacy.example.com/oauth/token")]
+    [InlineData("https://test.au.auth0.com/", "https://test.au.auth0.com/oauth/token")]
+    [InlineData("https://login.unlisted.example.com/", "https://test.au.auth0.com/oauth/token")]
+    public async Task AddAuth0OnBehalfOf_ExchangesOnTheDomainThatIssuedTheSubjectToken(string issuer, string expectedEndpoint)
+    {
+        var connection = new RecordingConnection();
+        var services = new ServiceCollection();
+        services.AddAuth0AuthenticationClient("test.au.auth0.com");
+        services.AddSingleton<IAuthenticationConnection>(connection);
+        services.AddAuth0OnBehalfOf(x =>
+        {
+            x.ClientId = "obo-id";
+            x.ClientSecret = "obo-secret";
+            x.AdditionalDomains = ["login.legacy.example.com", "https://login.legacy.example.com"];
+        });
+
+        var cache = services.BuildServiceProvider().GetRequiredService<IAuth0OnBehalfOfTokenCache>();
+        await cache.GetTokenAsync(OnBehalfOfCacheTests.CreateJwt(DateTimeOffset.UtcNow.AddHours(1), issuer: issuer), "https://downstream.example.com/",
+            token: TestContext.Current.CancellationToken);
+
+        var (uri, body) = Assert.Single(connection.Requests);
+        Assert.Equal(expectedEndpoint, uri.AbsoluteUri);
+        Assert.Equal(TokenType.AccessToken, body["requested_token_type"]);
+    }
+
+    [Fact]
+    public async Task AddAuth0OnBehalfOf_AddressesClientAssertion_ToTheDomainTheExchangeIsSentTo()
+    {
+        var connection = new RecordingConnection();
+        var services = new ServiceCollection();
+        services.AddAuth0AuthenticationClient("test.au.auth0.com");
+        services.AddSingleton<IAuthenticationConnection>(connection);
+        services.AddAuth0OnBehalfOf(x =>
+        {
+            x.ClientId = "obo-id";
+            x.ClientAssertionSecurityKey = new RsaSecurityKey(RSA.Create());
+            x.ClientAssertionSecurityKeyAlgorithm = SecurityAlgorithms.RsaSha256;
+            x.AdditionalDomains = ["login.legacy.example.com"];
+        });
+
+        var cache = services.BuildServiceProvider().GetRequiredService<IAuth0OnBehalfOfTokenCache>();
+        await cache.GetTokenAsync(OnBehalfOfCacheTests.CreateJwt(DateTimeOffset.UtcNow.AddHours(1), issuer: "https://login.legacy.example.com/"),
+            "https://downstream.example.com/", token: TestContext.Current.CancellationToken);
+
+        var assertion = new JsonWebToken(Assert.Single(connection.Requests).Body["client_assertion"]);
+        Assert.Equal("https://login.legacy.example.com/", Assert.Single(assertion.Audiences));
     }
 
     [Fact]
