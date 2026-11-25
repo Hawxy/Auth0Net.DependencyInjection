@@ -49,8 +49,9 @@ public sealed class OnBehalfOfCacheTests : IDisposable
     }
 
     private Auth0OnBehalfOfTokenCache CreateTokenCache(IFusionCache fusionCache, Auth0OnBehalfOfConfiguration config = null,
-        ILogger<Auth0OnBehalfOfTokenCache> logger = null, Func<IFusionCacheProvider, IFusionCache> defaultResolver = null) =>
-        new(_authClient, new SharedFusionCacheProvider(fusionCache),
+        ILogger<Auth0OnBehalfOfTokenCache> logger = null, Func<IFusionCacheProvider, IFusionCache> defaultResolver = null,
+        IAuthenticationConnection connection = null) =>
+        new(_authClient, connection ?? A.Fake<IAuthenticationConnection>(), new SharedFusionCacheProvider(fusionCache),
             logger ?? new NullLogger<Auth0OnBehalfOfTokenCache>(),
             Options.Create(new Auth0Configuration { Domain = "https://hawxy.au.auth0.com/", FusionCacheResolver = defaultResolver }),
             Options.Create(config ?? new Auth0OnBehalfOfConfiguration { ClientId = ClientId, ClientSecret = ClientSecret }));
@@ -235,6 +236,37 @@ public sealed class OnBehalfOfCacheTests : IDisposable
         AssertExchangeCount(1);
     }
 
+    [Fact]
+    public async Task SubjectToken_FromAdditionalDomain_IsExchangedOnThatDomain()
+    {
+        var connection = new RecordingConnection();
+        var cache = CreateTokenCache(_fusionCache, WithAdditionalDomain(), connection: connection);
+
+        await cache.GetTokenAsync(CreateJwt(DateTimeOffset.UtcNow.AddHours(1), issuer: "https://login.legacy.example.com/"), Audience,
+            token: TestContext.Current.CancellationToken);
+
+        Assert.Equal("https://login.legacy.example.com/oauth/token", Assert.Single(connection.Requests).Uri.AbsoluteUri);
+        AssertExchangeCount(0);
+    }
+
+    [Theory]
+    [InlineData("https://hawxy.au.auth0.com/")]
+    [InlineData("https://login.unlisted.example.com/")]
+    [InlineData(null)]
+    public async Task SubjectToken_FromAnyOtherIssuer_IsExchangedOnTheConfiguredDomain(string issuer)
+    {
+        var connection = new RecordingConnection();
+        var cache = CreateTokenCache(_fusionCache, WithAdditionalDomain(), connection: connection);
+
+        await cache.GetTokenAsync(CreateJwt(DateTimeOffset.UtcNow.AddHours(1), issuer: issuer), Audience, token: TestContext.Current.CancellationToken);
+
+        AssertExchangeCount(1);
+        Assert.Empty(connection.Requests);
+    }
+
+    private static Auth0OnBehalfOfConfiguration WithAdditionalDomain() =>
+        new() { ClientId = ClientId, ClientSecret = ClientSecret, AdditionalDomains = ["login.legacy.example.com"] };
+
     [Theory]
     [InlineData(HttpStatusCode.Unauthorized, "invalid_grant", "Subject token is invalid")]
     [InlineData(HttpStatusCode.Forbidden, "access_denied", "Client is not allowed to exchange tokens for this audience")]
@@ -379,12 +411,13 @@ public sealed class OnBehalfOfCacheTests : IDisposable
         Assert.Equal(expected, Auth0OnBehalfOfTokenCache.NormalizeScope(scope));
     }
 
-    private static string CreateJwt(DateTimeOffset expiresAt, string subject = "auth0|user")
+    internal static string CreateJwt(DateTimeOffset expiresAt, string subject = "auth0|user", string issuer = null)
     {
         static string Encode(string json) => Convert.ToBase64String(Encoding.UTF8.GetBytes(json)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
         var header = Encode("""{"alg":"RS256","typ":"JWT"}""");
-        var payload = Encode($$"""{"sub":"{{subject}}","jti":"{{Guid.NewGuid()}}","exp":{{expiresAt.ToUnixTimeSeconds()}}}""");
+        var iss = issuer is null ? "" : $$""","iss":"{{issuer}}" """;
+        var payload = Encode($$"""{"sub":"{{subject}}","jti":"{{Guid.NewGuid()}}","exp":{{expiresAt.ToUnixTimeSeconds()}}{{iss}}}""");
         return $"{header}.{payload}.c2lnbmF0dXJl";
     }
 

@@ -6,6 +6,7 @@ using System.Text;
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
 using Auth0.Core.Exceptions;
+using Auth0Net.DependencyInjection.HttpClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -19,6 +20,7 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
     private static readonly JsonWebTokenHandler TokenHandler = new();
 
     private readonly IAuthenticationApiClient _client;
+    private readonly Dictionary<string, IAuthenticationApiClient> _additionalClients;
     private readonly IFusionCache _cache;
     private readonly FusionCacheEntryOptions _entryOptions;
     private readonly ILogger<Auth0OnBehalfOfTokenCache> _logger;
@@ -30,12 +32,18 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
     /// <summary>
     /// An implementation of <see cref="IAuth0OnBehalfOfTokenCache"/> that exchanges and caches Auth0 On-Behalf-Of access tokens.
     /// </summary>
-    public Auth0OnBehalfOfTokenCache(IAuthenticationApiClient client, IFusionCacheProvider provider, ILogger<Auth0OnBehalfOfTokenCache> logger,
-        IOptions<Auth0Configuration> config, IOptions<Auth0OnBehalfOfConfiguration> onBehalfOfConfig)
+    public Auth0OnBehalfOfTokenCache(IAuthenticationApiClient client, IAuthenticationConnection connection, IFusionCacheProvider provider,
+        ILogger<Auth0OnBehalfOfTokenCache> logger, IOptions<Auth0Configuration> config, IOptions<Auth0OnBehalfOfConfiguration> onBehalfOfConfig)
     {
         _client = client;
         _logger = logger;
         _config = onBehalfOfConfig.Value;
+
+        // One client per additional domain, keyed by the issuer Auth0 writes for it: the domain's https URL with a trailing slash.
+        _additionalClients = _config.AdditionalDomains
+            .Select(UriHelpers.GetValidUri)
+            .Distinct()
+            .ToDictionary<Uri, string, IAuthenticationApiClient>(x => x.AbsoluteUri, x => new AuthenticationApiClient(x, connection), StringComparer.OrdinalIgnoreCase);
 
         var resolver = _config.FusionCacheResolver ?? config.Value.FusionCacheResolver;
         var cache = resolver != null ? resolver(provider) : provider.GetCache(Constants.FusionCacheInstance);
@@ -72,10 +80,16 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
 
         return (await _cache.GetOrSetAsync<OnBehalfOfToken>(Key(subjectToken, audience, normalizedScope, organization), async (ctx, ct) =>
         {
-            // Only checked on a miss, as a cached entry never outlives the subject token.
-            var subjectExpiry = ReadSubjectExpiry(subjectToken);
+            // Only read on a miss, as a cached entry never outlives the subject token.
+            var subject = ReadSubjectToken(subjectToken);
+            DateTimeOffset? subjectExpiry = subject is null || subject.ValidTo == DateTime.MinValue
+                ? null
+                : new DateTimeOffset(DateTime.SpecifyKind(subject.ValidTo, DateTimeKind.Utc));
             if (subjectExpiry <= DateTimeOffset.UtcNow)
                 throw Failed(audience, Auth0OnBehalfOfException.SubjectTokenExpired());
+
+            // Auth0 only exchanges a token on the domain that issued it.
+            var client = subject is not null && _additionalClients.TryGetValue(subject.Issuer, out var additionalClient) ? additionalClient : _client;
 
             var request = new OnBehalfOfTokenRequest
             {
@@ -94,7 +108,7 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
             OnBehalfOfTokenResponse response;
             try
             {
-                response = await _client.GetTokenOnBehalfOfAsync(request, ct);
+                response = await client.GetTokenOnBehalfOfAsync(request, ct);
             }
             catch (RateLimitApiException ex)
             {
@@ -187,17 +201,16 @@ public sealed class Auth0OnBehalfOfTokenCache : IAuth0OnBehalfOfTokenCache
     }
 
     /// <summary>
-    /// Reads the subject token's exp claim without validating the token. Returns null for opaque tokens or tokens without exp.
+    /// Reads the subject token without validating it. Returns null for opaque tokens.
     /// </summary>
-    private static DateTimeOffset? ReadSubjectExpiry(string subjectToken)
+    private static JsonWebToken? ReadSubjectToken(string subjectToken)
     {
         if (!TokenHandler.CanReadToken(subjectToken))
             return null;
 
         try
         {
-            var validTo = TokenHandler.ReadJsonWebToken(subjectToken).ValidTo;
-            return validTo == DateTime.MinValue ? null : new DateTimeOffset(DateTime.SpecifyKind(validTo, DateTimeKind.Utc));
+            return TokenHandler.ReadJsonWebToken(subjectToken);
         }
         catch (Exception)
         {

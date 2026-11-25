@@ -19,6 +19,10 @@ public interface IAuth0OnBehalfOfTokenCache
     /// <see cref="Auth0OnBehalfOfException"/> with status code 401 is thrown. If the subject token is not a readable JWT, or has no <c>exp</c> claim,
     /// the cache duration is not capped and Auth0 decides whether the token is valid.
     /// </para>
+    /// <para>
+    /// The subject token's <c>iss</c> claim is read the same way. If it is one of the <see cref="Auth0OnBehalfOfConfiguration.AdditionalDomains"/>,
+    /// the token is exchanged on that domain. Otherwise it is exchanged on the domain of the <see cref="Auth0Configuration"/>.
+    /// </para>
     /// </remarks>
     /// <param name="subjectToken">The user's access token, as received by this API.</param>
     /// <param name="audience">The audience of the API the exchanged token is for.</param>

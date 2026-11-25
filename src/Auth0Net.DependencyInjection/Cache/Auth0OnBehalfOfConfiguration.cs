@@ -8,7 +8,7 @@ namespace Auth0Net.DependencyInjection.Cache;
 /// </summary>
 /// <remarks>
 /// <see cref="ClientId"/> is required, along with either <see cref="ClientSecret"/>, or <see cref="ClientAssertionSecurityKey"/> and <see cref="ClientAssertionSecurityKeyAlgorithm"/>.
-/// The domain is taken from the <see cref="Auth0Configuration"/> of the registered authentication client.
+/// The domain is taken from the <see cref="Auth0Configuration"/> of the registered authentication client, unless the subject token was issued by one of the <see cref="AdditionalDomains"/>.
 /// </remarks>
 public sealed class Auth0OnBehalfOfConfiguration
 {
@@ -33,6 +33,15 @@ public sealed class Auth0OnBehalfOfConfiguration
     public string? ClientAssertionSecurityKeyAlgorithm { get; set; }
 
     /// <summary>
+    /// Other custom domains of the same Auth0 tenant that issue the tokens this API receives.
+    /// </summary>
+    /// <remarks>
+    /// Auth0 only exchanges a token on the domain that issued it. A subject token whose <c>iss</c> is one of these domains is exchanged on that domain,
+    /// and the exchanged token carries that domain as its issuer. Any other subject token is exchanged on the domain of the <see cref="Auth0Configuration"/>.
+    /// </remarks>
+    public IEnumerable<string> AdditionalDomains { get; set; } = Array.Empty<string>();
+
+    /// <summary>
     /// The FusionCache instance used for exchanged tokens.
     /// Defaults to <see cref="Auth0Configuration.FusionCacheResolver"/> if set, otherwise the instance used by this library.
     /// </summary>
@@ -48,6 +57,7 @@ public sealed class Auth0OnBehalfOfConfiguration
 
     internal bool IsValid() =>
         !string.IsNullOrWhiteSpace(ClientId) &&
+        AdditionalDomains.All(x => !string.IsNullOrWhiteSpace(x)) &&
         (!string.IsNullOrWhiteSpace(ClientSecret) ||
          (ClientAssertionSecurityKey is not null && !string.IsNullOrWhiteSpace(ClientAssertionSecurityKeyAlgorithm)));
 }

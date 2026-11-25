@@ -157,16 +157,12 @@ public static class Auth0Extensions
             if (provider.GetService<IAuthenticationApiClient>() is null)
                 throw new InvalidOperationException($"No {nameof(IAuthenticationApiClient)} has been registered. Call {nameof(AddAuth0AuthenticationClient)} to use {nameof(AddAuth0OnBehalfOf)}.");
 
-            // A dedicated client whose connection adds the requested_token_type parameter missing from Auth0.AuthenticationApi.
-            var client = new InjectableAuthenticationApiClient(provider.GetRequiredService<IOptions<Auth0Configuration>>(),
-                new OnBehalfOfAuthenticationConnection(provider.GetRequiredService<IAuthenticationConnection>()));
-
-            return ActivatorUtilities.CreateInstance<Auth0OnBehalfOfTokenCache>(provider, client);
+            return ActivatorUtilities.CreateInstance<Auth0OnBehalfOfTokenCache>(provider);
         });
 
         return services.AddOptions<Auth0OnBehalfOfConfiguration>()
             .Validate(x => x.IsValid(),
-                "Auth0 On-Behalf-Of configuration requires a ClientId, and either a ClientSecret or a ClientAssertionSecurityKey with a ClientAssertionSecurityKeyAlgorithm");
+                "Auth0 On-Behalf-Of configuration requires a ClientId, either a ClientSecret or a ClientAssertionSecurityKey with a ClientAssertionSecurityKeyAlgorithm, and no empty AdditionalDomains");
     }
 
     /// <summary>
